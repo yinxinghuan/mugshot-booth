@@ -14,7 +14,7 @@ import { useEffect, useRef } from 'react';
 interface Props {
   src: string;
   ink?: string;          // CSS color of the dots. Default cobalt blue.
-  cell?: number;         // Dot grid cell in px (at 1×). Default 3.4.
+  cell?: number;         // Dot grid cell in px (at 1×). Default 2.2.
   angle?: number;        // Grid rotation in degrees. Default -8.
   className?: string;
   /** width / height in CSS pixels — defines the layout box. */
@@ -25,7 +25,7 @@ interface Props {
 export default function HalftonePhoto({
   src,
   ink = '#1d33c4',
-  cell = 3.4,
+  cell = 2.2,
   angle = -8,
   className,
   width,
@@ -169,7 +169,9 @@ function render(
       }
       lum /= count;
       const inkAmount = Math.max(0, 1 - lum);
-      if (inkAmount < 0.06) continue;
+      // Lower threshold = mid-tones still produce small dots instead
+      // of being treated as paper. Crucial for showing facial detail.
+      if (inkAmount < 0.025) continue;
 
       const baseR = (cell / 2) * Math.sqrt(inkAmount);
       const r = baseR * (1 + (rnd() - 0.5) * radiusVar);
