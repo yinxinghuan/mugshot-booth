@@ -271,8 +271,13 @@
 /* Actions row */
 .mb-actions {
   position: absolute;
-  bottom: 18px;
-  left: 18px; right: 18px;
+  bottom: 0;
+  left: 0; right: 0;
+  // Bottom backdrop so cards scrolling past behind these chips don't
+  // bleed through. Fades from transparent into solid cream paper as
+  // it nears the buttons.
+  padding: 30px 18px 18px;
+  background: linear-gradient(180deg, fade(@paper, 0%) 0%, @paper 40%);
   display: flex;
   gap: 12px;
   z-index: 16;
@@ -755,23 +760,30 @@
 }
 
 .mb-gal__board {
+  // Full-width, edge-to-edge scroll area. Cards bleed past the side
+  // margins (with the per-card tilt some corners can even leave the
+  // viewport — desired, gives the "evidence wall" feel). Top edge
+  // sits below the title; bottom extends behind the action buttons
+  // which carry their own backdrop fade.
   position: absolute;
-  top: 264px;
-  bottom: 92px;
-  left: 16px; right: 16px;
+  top: 220px;
+  bottom: 0;
+  left: 0; right: 0;
+  // Padding controls the inner gutter; outer container is full bleed.
+  padding: 8px 14px 110px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px 14px;
   align-content: start;
-  // Bump above the 360px red ring wash (which lives at z-auto). With z:4 we
-  // were getting beat by the wash's stacking context inside the cards'
-  // filter() boundary. z:10 is a clean win.
   z-index: 10;
+  // Vertical scroll only — hide any horizontal overflow from tilted
+  // cards so swiping left/right doesn't pan the board sideways.
+  overflow-x: hidden;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;     // momentum scroll on iOS Safari
-  overscroll-behavior: contain;          // don't bubble scroll up to Telegram
-  // Tell the browser this region is meant for vertical pan; otherwise
-  // some WebViews intercept the touch as a tap on the first child.
+  -webkit-overflow-scrolling: touch;     // iOS momentum
+  overscroll-behavior: contain;          // don't bubble to Telegram host
+  // Explicit single-axis pan — the WebView will reject sideways pan
+  // gestures rather than letting them scroll the board.
   touch-action: pan-y;
 }
 
