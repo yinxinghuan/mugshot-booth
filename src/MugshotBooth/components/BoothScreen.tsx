@@ -70,14 +70,15 @@ export default function BoothScreen({
 
       {preview ? (
         <div className="mb-booth__preview">
-          <HalftonePhoto src={preview.url} width={240} height={300} />
+          <HalftonePhoto src={preview.url} width={260} height={325} cell={2.4} />
         </div>
       ) : (
         <div className="mb-booth__camera">
           <HalftonePhoto
             src="/mugshot-booth/demo_camera.jpg"
-            width={220}
-            height={268}
+            width={260}
+            height={316}
+            cell={2.4}
           />
         </div>
       )}
@@ -161,7 +162,9 @@ export default function BoothScreen({
             </div>
           </>
         )}
-        <div className="mb-booth-count">— {String(booked).padStart(3, '0')} SUSPECTS BOOKED —</div>
+        <div className="mb-booth-count">
+          <b>{String(booked).padStart(3, '0')}</b> SUSPECTS BOOKED THIS WEEK
+        </div>
       </div>
     </>
   );

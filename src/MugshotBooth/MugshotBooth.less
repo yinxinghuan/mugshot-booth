@@ -271,13 +271,21 @@
 /* Booth count text under actions */
 .mb-booth-count {
   text-align: center;
-  font-family: @font-mono;
-  font-size: 10px;
+  font-family: @font-stencil;
+  font-weight: 800;
+  font-size: 13px;
   letter-spacing: .22em;
-  color: @ink;
-  opacity: .55;
+  color: @blue-deep;
+  opacity: 0.85;
   text-transform: uppercase;
-  padding-top: 2px;
+  padding-top: 6px;
+}
+.mb-booth-count b {
+  color: @red;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: .12em;
+  margin: 0 4px;
 }
 
 /* ───────── BOOTH SCREEN ───────── */
@@ -302,11 +310,11 @@
 
 .mb-booth__camera {
   position: absolute;
-  top: 270px;
+  top: 246px;
   left: 50%;
   transform: translateX(-50%) rotate(-3deg);
-  width: 220px;
-  height: 268px;
+  width: 260px;
+  height: 316px;
   z-index: 4;
 }
 
@@ -338,11 +346,11 @@
 
 .mb-booth__preview {
   position: absolute;
-  top: 270px;
+  top: 240px;
   left: 50%;
   transform: translateX(-50%) rotate(-2deg);
-  width: 240px;
-  height: 300px;
+  width: 260px;
+  height: 325px;
   z-index: 6;
   canvas {
     display: block;

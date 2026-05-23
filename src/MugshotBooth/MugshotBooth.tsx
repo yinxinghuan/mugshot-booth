@@ -204,9 +204,8 @@ export default function MugshotBooth() {
           onNew={handleNew}
         />
       )}
-      {phase === 'booth' && !hasFirstTouched && (
-        <div className="mb-hint">{t('hint_tap_play')}</div>
-      )}
+      {/* Bottom-corner hint removed — the chunky 'TAKE THE SHOT' CTA is
+          self-evident, and the hint was overlapping the booking count. */}
     </div>
   );
 }
