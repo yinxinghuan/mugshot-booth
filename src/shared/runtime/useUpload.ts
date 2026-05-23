@@ -32,13 +32,13 @@ export function useUpload(): UseUpload {
       // a File the browser uses file.name; for raw Blob, provide a name.
       if (filename) form.append('file', file, filename);
       else form.append('file', file);
-      // credentials: 'include' so the chat.aiwaves.tech session cookie
-      // (set when the iframe was loaded from that origin) is sent. The
-      // platform's upload endpoint authenticates via that session.
+      // NO credentials:'include'. The platform sets
+      // Access-Control-Allow-Origin: *, which Safari/WebKit will then
+      // reject as "Load failed" if the request also carries credentials.
+      // Plain anonymous fetch is correct for this endpoint.
       const res = await fetch(UPLOAD_URL, {
         method: 'POST',
         body: form,
-        credentials: 'include',
       });
       if (!res.ok) {
         let detail = '';
