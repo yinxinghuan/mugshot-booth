@@ -60,17 +60,15 @@ export function useMugshotGen(): UseMugshotGen {
       setError(null);
 
       try {
-        // 1) Prepare + upload the selfie. Platform upload was repaired
-        //    2026-05-23 (was 401 before). No fallback now — if upload
-        //    fails we surface the error so we know immediately rather
-        //    than silently degrading to txt2img.
+        // 1) Prepare + upload the selfie. Platform upload repaired
+        //    2026-05-23.
         setStage('uploading');
         const prepared = await prepareSelfie(selfie);
         const uploaded = await upload(prepared, 'selfie.jpg');
         const selfieUrl = uploaded.url;
 
-        // 2) Kick off charges + metadata LLM calls in parallel with image gen.
-        //    The LLM calls finish in ~2-5s; the image gen takes ~60-180s.
+        // 2) LLM calls for charges + metadata. (No AI image gen — see
+        //    below.) Run in parallel; both finish in ~2-5s.
         setStage('charges');
         const seed = Math.random().toString(36).slice(2, 8);
         const userTurn = `New suspect — generate a fresh booking sheet. seed:${seed}`;
@@ -91,21 +89,28 @@ export function useMugshotGen(): UseMugshotGen {
           }
         })();
 
-        // Once charges resolve, advance to "booking" stage. Don't wait
-        // for image gen yet — show the progress to the user.
         chargesPromise.then(() => setStage('booking'));
 
-        // 3) The mug photo. If we have a selfie URL, do img2img (face match);
-        //    otherwise txt2img with the same prompt (generic noir suspect).
-        const imgPrompt = buildMugshotPrompt(caseNumber);
-        const imagePromise = selfieUrl
-          ? genImg({ prompt: imgPrompt, ref_url: selfieUrl })
-          : genImg({ prompt: imgPrompt });
+        // 3) NO img2img anymore. We tried wdabuliu's img2img with strong
+        //    "preserve same face" prompts — it kept generating a generic
+        //    person that didn't look like the actual uploaded selfie.
+        //    The whole game falls apart if the suspect's face doesn't
+        //    belong to the suspect.
+        //
+        //    Instead: use the uploaded selfie URL directly as the mug
+        //    photo. HalftonePhoto's Riso canvas treatment + the case-file
+        //    UI (red ring wash, GUILTY stamp, surrounding charges) is
+        //    what carries the "mugshot" aesthetic. The user's actual
+        //    face is guaranteed to appear because no AI is rewriting it.
+        //
+        //    Tradeoff: we lose the AI-generated background (precinct
+        //    wall, height ruler, ALTERU PD placard in the photo). Could
+        //    composite those back in with SVG overlays later.
+        const imageUrl = selfieUrl;
 
-        const [charges, metadata, imageUrl] = await Promise.all([
+        const [charges, metadata] = await Promise.all([
           chargesPromise,
           metadataPromise,
-          imagePromise,
         ]);
 
         // 4) Pre-warm the image so the result page doesn't show a black tile.
