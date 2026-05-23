@@ -60,11 +60,25 @@ export function useMugshotGen(): UseMugshotGen {
       setError(null);
 
       try {
-        // 1) Prepare + upload the selfie.
+        // 1) Prepare + (optionally) upload the selfie.
+        //
+        // The platform's upload endpoint currently returns 401 from games
+        // running in third-party iframes (auth scheme is undocumented; we're
+        // asking the platform team). To keep the game usable, we attempt
+        // the upload but fall back to txt2img with no ref if it fails —
+        // booking completes with a generic noir mugshot rather than the
+        // user's face.
         setStage('uploading');
         const prepared = await prepareSelfie(selfie);
-        const uploaded = await upload(prepared, 'selfie.jpg');
-        const selfieUrl = uploaded.url;
+        let selfieUrl = '';
+        try {
+          const uploaded = await upload(prepared, 'selfie.jpg');
+          selfieUrl = uploaded.url;
+        } catch (uploadErr) {
+          // Swallow — the rest of the flow handles missing ref_url.
+          // eslint-disable-next-line no-console
+          console.warn('mugshot-gen: upload failed, falling back to txt2img', uploadErr);
+        }
 
         // 2) Kick off charges + metadata LLM calls in parallel with image gen.
         //    The LLM calls finish in ~2-5s; the image gen takes ~60-180s.
@@ -92,9 +106,12 @@ export function useMugshotGen(): UseMugshotGen {
         // for image gen yet — show the progress to the user.
         chargesPromise.then(() => setStage('booking'));
 
-        // 3) The mug photo.
+        // 3) The mug photo. If we have a selfie URL, do img2img (face match);
+        //    otherwise txt2img with the same prompt (generic noir suspect).
         const imgPrompt = buildMugshotPrompt(caseNumber);
-        const imagePromise = genImg({ prompt: imgPrompt, ref_url: selfieUrl });
+        const imagePromise = selfieUrl
+          ? genImg({ prompt: imgPrompt, ref_url: selfieUrl })
+          : genImg({ prompt: imgPrompt });
 
         const [charges, metadata, imageUrl] = await Promise.all([
           chargesPromise,
