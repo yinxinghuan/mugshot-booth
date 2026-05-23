@@ -38,15 +38,11 @@ export async function prepareSelfie(file: File): Promise<Blob> {
   canvas.height = TARGET_H;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('selfie: could not get canvas 2d context');
-  // Boost contrast + slight desaturation BEFORE drawing.
-  //
-  // Why: the API output (img2img mugshot) tracks the ref image's tonal
-  // range pretty faithfully. A flat-lit phone selfie ends up as a flat-
-  // lit mugshot. Pre-boosting contrast in the ref gets us a crisper B&W
-  // mugshot AND gives our halftone renderer cleaner dark/light dot
-  // separation. Slight saturate(0.85) keeps skin tones believable
-  // without going full grayscale (which the API handles less well).
-  ctx.filter = 'contrast(1.40) brightness(1.05) saturate(0.85)';
+  // Light contrast lift only. Hard contrast was crushing skin tones and
+  // hurting the API's ability to preserve facial identity from the ref.
+  // The img2img model needs intermediate tones to read facial features;
+  // pre-baking the ref to near-binary B&W produced generic outputs.
+  ctx.filter = 'contrast(1.15) brightness(1.03)';
   ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, TARGET_W, TARGET_H);
   ctx.filter = 'none';
 

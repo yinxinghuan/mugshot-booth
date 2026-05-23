@@ -113,12 +113,12 @@ function render(
     // Bias crop slightly upward — faces tend to sit in the upper third.
     sy = Math.max(0, (img.naturalHeight - sh) / 2 - sh * 0.04);
   }
-  // Pre-process: hard contrast + slight brightness lift + desaturate.
-  // Same recipe as prepareSelfie() so the halftone matches what the API
-  // ref looks like. The aggressive contrast turns mid-tones into a more
-  // bimodal distribution, which makes dot radii (sqrt(1-lum)) cluster
-  // into "clearly inked" vs "clearly empty" — sharper Riso look.
-  sctx.filter = 'contrast(1.45) brightness(1.04) saturate(0.7)';
+  // Mild contrast lift + slight desaturation. Hard contrast pushed
+  // mid-tones into binary 0/1 territory and destroyed face features —
+  // user reported the rendered photo no longer looked like the source.
+  // Halftone dots already provide the bimodal print look; we don't need
+  // to crush the source image to get there.
+  sctx.filter = 'contrast(1.12) brightness(1.02) saturate(0.85)';
   sctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
   sctx.filter = 'none';
 
