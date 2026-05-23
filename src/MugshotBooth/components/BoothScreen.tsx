@@ -69,14 +69,14 @@ export default function BoothScreen({
 
       {preview ? (
         <div className="mb-booth__preview">
-          <HalftonePhoto src={preview.url} width={260} height={325} cell={2.4} />
+          <HalftonePhoto src={preview.url} width={220} height={275} cell={2.4} />
         </div>
       ) : (
         <div className="mb-booth__camera">
           <HalftonePhoto
             src="/mugshot-booth/demo_camera.jpg"
-            width={260}
-            height={316}
+            width={220}
+            height={268}
             cell={2.4}
           />
         </div>
