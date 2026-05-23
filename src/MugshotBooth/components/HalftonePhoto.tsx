@@ -9,7 +9,7 @@
 // Mount this component instead of an <img>. It auto-rerenders when src
 // or ink color changes.
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
   src: string;
@@ -32,12 +32,16 @@ export default function HalftonePhoto({
   height,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // canvasDrew flips to true when the CORS-anonymous image loaded AND
+  // we successfully called render() — at that point we hide the <img>
+  // fallback so the canvas halftone is the only thing showing.
+  const [canvasDrew, setCanvasDrew] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    setCanvasDrew(false);
 
-    // Internal canvas at 2× for HiDPI sharpness.
     const dpr = 2;
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
@@ -50,11 +54,19 @@ export default function HalftonePhoto({
 
     img.onload = () => {
       if (cancelled) return;
-      render(canvas, img, ink, cell * dpr, angle);
+      try {
+        render(canvas, img, ink, cell * dpr, angle);
+        setCanvasDrew(true);
+      } catch {
+        // getImageData may throw SecurityError on a tainted canvas even
+        // if the image loaded. Treat as failure → leave img fallback on.
+        setCanvasDrew(false);
+      }
     };
     img.onerror = () => {
-      // Fall through silently — caller can render a fallback in its own
-      // sibling element if the image fails.
+      // CORS-anonymous load failed (host has no Access-Control-Allow-
+      // Origin). The plain <img> fallback below still loads the asset.
+      setCanvasDrew(false);
     };
     img.src = src;
 
@@ -73,26 +85,27 @@ export default function HalftonePhoto({
         display: 'block',
       }}
     >
-      {/* Fallback layer — a plain <img> with NO crossOrigin so it always
-          loads even if the host (e.g., images.aiwaves.tech) doesn't send
-          CORS headers. Heavy grayscale + contrast makes it look noir even
-          without the halftone canvas. Multiply blend lets it tint
-          whatever wash sits behind it (red disc → red-tinted photo). */}
-      <img
-        src={src}
-        alt=""
-        draggable={false}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          filter: 'grayscale(1) contrast(1.25) brightness(1.02)',
-          mixBlendMode: 'multiply',
-          zIndex: 1,
-        }}
-      />
+      {/* Fallback <img> — only shown when the canvas couldn't draw
+          (CORS-blocked host like images.aiwaves.tech). When canvas
+          succeeded we hide this so the halftone is the only thing
+          visible (original aesthetic). */}
+      {!canvasDrew && (
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'grayscale(1) contrast(1.25) brightness(1.02)',
+            mixBlendMode: 'multiply',
+            zIndex: 1,
+          }}
+        />
+      )}
       {/* Halftone canvas. Requires CORS — if the image can't be read for
           luminance sampling, this canvas stays empty and the <img>
           fallback above shows through. */}
