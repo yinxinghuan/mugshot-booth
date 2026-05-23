@@ -32,8 +32,19 @@ export function useUpload(): UseUpload {
       // a File the browser uses file.name; for raw Blob, provide a name.
       if (filename) form.append('file', file, filename);
       else form.append('file', file);
-      const res = await fetch(UPLOAD_URL, { method: 'POST', body: form });
-      if (!res.ok) throw new Error(`upload failed: HTTP ${res.status}`);
+      // credentials: 'include' so the chat.aiwaves.tech session cookie
+      // (set when the iframe was loaded from that origin) is sent. The
+      // platform's upload endpoint authenticates via that session.
+      const res = await fetch(UPLOAD_URL, {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        let detail = '';
+        try { detail = await res.text(); } catch { /* ignore */ }
+        throw new Error(`upload HTTP ${res.status}${detail ? ` — ${detail.slice(0, 120)}` : ''}`);
+      }
       const json = (await res.json()) as UploadResult;
       if (!json.url) throw new Error('upload response had no url');
       return json;

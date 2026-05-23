@@ -120,8 +120,9 @@ export default function MugshotBooth() {
       const nextMugs = prependMugshot(savedData?.mugshots, m);
       persist({ mugshots: nextMugs });
       setLocalExtra((prev) => [m, ...prev].slice(0, 12));
-    } catch {
-      setErrorLabel(t('err_processing'));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErrorLabel(`${t('err_processing')} (${msg.slice(0, 100)})`);
       setPhase('booth');
     } finally {
       setPendingCase(null);
