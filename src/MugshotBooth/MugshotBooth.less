@@ -813,7 +813,12 @@
 .mb-gal__card-photo {
   position: relative;
   aspect-ratio: 4 / 5;
-  overflow: visible;
+  /* Clip the wash bleed to the photo rectangle so it doesn't spill into
+     the adjacent card. Previous overflow:visible + inset:-10% on the
+     wash made the disc shape extend past the card boundary (further
+     amplified by the per-card -3.4°/+2.6° tilt) and visually cropped
+     neighbouring cards. */
+  overflow: hidden;
   margin-bottom: 8px;
   canvas {
     width: 100%; height: 100%;
@@ -824,12 +829,14 @@
   }
   svg.mb-gal__wash-bg {
     position: absolute;
-    inset: -10%;
-    width: 120%;
-    height: 120%;
+    /* inset:-5% gives a slight bleed inside the clipped photo bounds,
+       enough for the wobble filter to feel organic without spilling
+       past the card. */
+    inset: -5%;
+    width: 110%;
+    height: 110%;
     z-index: 1;
     pointer-events: none;
-    overflow: visible;
     g { filter: url(#mb-wash); }
     :is(circle, rect, polygon, path, ellipse) {
       fill: @red;
