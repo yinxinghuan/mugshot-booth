@@ -74,7 +74,7 @@ export function useGallery(): UseGallery {
         if (cancelled) return;
         setEntries(
           parsed.map(({ row, mugshot }, i) => ({
-            userId: row.user_id,
+            userId: String(row.user_id),  // normalize: platform may return number
             userName: profiles[i]?.data?.name,
             userAvatarUrl: profiles[i]?.data?.head_url,
             mugshot,
@@ -95,5 +95,5 @@ export function useGallery(): UseGallery {
 }
 
 export function isSelf(entry: WallEntry): boolean {
-  return !!telegramId && entry.userId === String(telegramId);
+  return !!telegramId && String(entry.userId) === String(telegramId);
 }

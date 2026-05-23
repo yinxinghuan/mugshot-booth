@@ -62,7 +62,11 @@ export function useGameSave<T>(gameId: string): UseGameSave<T> {
             'GET',
           );
           const rows: SaveRow[] = Array.isArray(res?.data) ? res.data : [];
-          const mine = rows.find(r => r.user_id === telegramId);
+          // Type-safe compare: the platform sometimes returns user_id as
+          // a number while telegramId is always a string (URL param).
+          // Strict === then mis-matches and the cloud row never loads.
+          const myTid = String(telegramId);
+          const mine = rows.find(r => String(r.user_id) === myTid);
           if (mine && mine.resource_data) {
             try {
               const save = JSON.parse(mine.resource_data) as T;
