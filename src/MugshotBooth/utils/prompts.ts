@@ -52,18 +52,32 @@ Output ONLY the JSON object. No markdown, no prose.`;
  * the output portrait sits naturally on the case file.
  */
 export function buildMugshotPrompt(caseNumber: string): string {
+  // PROMPT STRUCTURE NOTE (Mugshot Booth v2.1, 2026-05-24):
+  //
+  // The wdabuliu img2img API heavily weights the prompt — long style
+  // descriptions can override the reference's identity, producing a
+  // generic person instead of the actual uploaded face. To preserve
+  // face similarity we:
+  //   1. Lead with explicit identity-preservation instructions
+  //   2. Keep style descriptors short
+  //   3. End by reiterating "same face as reference"
   return [
-    'A gritty black-and-white police mugshot photograph of the same person from the reference image.',
-    'Subject faces the camera straight-on, head and shoulders only, deadpan neutral expression, slightly tired eyes — the look of someone who has been waiting in a holding cell for hours.',
-    'Subject is holding a vintage cardboard inmate ID placard at chest level. The placard has bold black hand-stenciled text on cream card stock that clearly reads:',
-    `"ALTERU PD"`,
-    `"${caseNumber}"`,
-    'Both lines must be legible.',
-    'Behind the subject, an off-white concrete wall with the classic vertical height-measurement ruler running floor-to-ceiling, with horizontal tick marks every inch and numbered every foot. The wall is scuffed and grimy.',
-    'Lighting: single harsh overhead booking-room fluorescent, creating strong contrast and a thin shadow under the chin. Slightly underexposed.',
-    'Aesthetic: high-contrast black-and-white film photograph, heavy 35mm film grain, slight motion blur, scuffed and aged paper texture overlay, slightly off-center framing, vintage 1970s precinct booking photo. Think Bill Brandt / Diane Arbus / Weegee.',
-    'Color: pure desaturated black-and-white only, no color tint.',
-    'No watermarks, no border, no frame, no other text in the image beyond the placard. Vertical portrait composition, 4:5 aspect ratio.',
+    // ─── Identity preservation (HIGHEST PRIORITY) ──────────────
+    'IMPORTANT: keep the exact same face as the reference image —',
+    'same facial features, same hair, same skin tone, same age, same identity.',
+    'Do NOT generate a different person. The output MUST clearly look like the person in the reference.',
+    // ─── What changes (style + scenery) ──────────────────────
+    'Convert the reference photo into a black-and-white police mugshot:',
+    'subject faces the camera straight-on, deadpan neutral expression,',
+    'holding a cream cardboard inmate ID placard at chest level with bold',
+    `black stenciled text reading "ALTERU PD" and "${caseNumber}" (legible).`,
+    'Background: scuffed concrete wall with vertical height ruler.',
+    'Lighting: single overhead booking-room fluorescent, high contrast.',
+    '35mm film grain, vintage 1970s precinct booking photo aesthetic.',
+    'Desaturated black-and-white only, no color tint.',
+    'Vertical portrait, 4:5 aspect ratio, no border, no extra text.',
+    // ─── Identity reminder ──────────────────────────────────
+    'Again: the face MUST match the reference image exactly — same person.',
   ].join(' ');
 }
 

@@ -60,25 +60,14 @@ export function useMugshotGen(): UseMugshotGen {
       setError(null);
 
       try {
-        // 1) Prepare + (optionally) upload the selfie.
-        //
-        // The platform's upload endpoint currently returns 401 from games
-        // running in third-party iframes (auth scheme is undocumented; we're
-        // asking the platform team). To keep the game usable, we attempt
-        // the upload but fall back to txt2img with no ref if it fails —
-        // booking completes with a generic noir mugshot rather than the
-        // user's face.
+        // 1) Prepare + upload the selfie. Platform upload was repaired
+        //    2026-05-23 (was 401 before). No fallback now — if upload
+        //    fails we surface the error so we know immediately rather
+        //    than silently degrading to txt2img.
         setStage('uploading');
         const prepared = await prepareSelfie(selfie);
-        let selfieUrl = '';
-        try {
-          const uploaded = await upload(prepared, 'selfie.jpg');
-          selfieUrl = uploaded.url;
-        } catch (uploadErr) {
-          // Swallow — the rest of the flow handles missing ref_url.
-          // eslint-disable-next-line no-console
-          console.warn('mugshot-gen: upload failed, falling back to txt2img', uploadErr);
-        }
+        const uploaded = await upload(prepared, 'selfie.jpg');
+        const selfieUrl = uploaded.url;
 
         // 2) Kick off charges + metadata LLM calls in parallel with image gen.
         //    The LLM calls finish in ~2-5s; the image gen takes ~60-180s.
