@@ -760,30 +760,29 @@
 }
 
 .mb-gal__board {
-  // Full-width, edge-to-edge scroll area. Cards bleed past the side
-  // margins (with the per-card tilt some corners can even leave the
-  // viewport — desired, gives the "evidence wall" feel). Top edge
-  // sits below the title; bottom extends behind the action buttons
-  // which carry their own backdrop fade.
+  // Edge-to-edge scroll area that starts just below the meta strip and
+  // ends at the very bottom. The ROGUE'S GALLERY title sits inside the
+  // board's PADDING — so on initial load, cards appear below the title.
+  // As the user scrolls up, the cards move past the title in z-order
+  // (board z:10 > title z:5) and cover it. Meta strip up top stays
+  // visible always. Bottom is covered by the actions' paper-fade.
   position: absolute;
-  top: 220px;
+  top: 38px;             // just below the 28-px meta strip
   bottom: 0;
   left: 0; right: 0;
-  // Padding controls the inner gutter; outer container is full bleed.
-  padding: 8px 14px 110px;
+  // padding-top reserves room for the title to "live" inside the
+  // scrollable canvas before the first row of cards. Scrolling up
+  // moves the cards over the title and reveals more rows below.
+  padding: 200px 14px 130px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px 14px;
   align-content: start;
   z-index: 10;
-  // Vertical scroll only — hide any horizontal overflow from tilted
-  // cards so swiping left/right doesn't pan the board sideways.
   overflow-x: hidden;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;     // iOS momentum
-  overscroll-behavior: contain;          // don't bubble to Telegram host
-  // Explicit single-axis pan — the WebView will reject sideways pan
-  // gestures rather than letting them scroll the board.
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   touch-action: pan-y;
 }
 
