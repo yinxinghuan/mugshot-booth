@@ -75,7 +75,11 @@ export default function Gallery({ community, mine, loaded, onBack, onView, onNew
       />
       <TicketStub>PRECINCT 17 · MOST WANTED · LOOK OFTEN · STAY ALERT</TicketStub>
 
-      <RedRingWash style={{ position: 'absolute', top: 60 }} />
+      {/* Smaller wash than the other screens — the gallery board starts
+          at y=264 and the cards must not be visually covered by the
+          wash. A 250px ring sitting at y=58 bottoms out at y=308, well
+          inside the title area, leaving the cards clean. */}
+      <RedRingWash size={250} style={{ position: 'absolute', top: 58 }} />
 
       <div className="mb-gal__head">
         <div className="mb-gal__head__l1">ROGUE'S</div>

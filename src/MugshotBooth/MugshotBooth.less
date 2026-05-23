@@ -763,8 +763,16 @@
   grid-template-columns: 1fr 1fr;
   gap: 22px 14px;
   align-content: start;
-  z-index: 4;
+  // Bump above the 360px red ring wash (which lives at z-auto). With z:4 we
+  // were getting beat by the wash's stacking context inside the cards'
+  // filter() boundary. z:10 is a clean win.
+  z-index: 10;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;     // momentum scroll on iOS Safari
+  overscroll-behavior: contain;          // don't bubble scroll up to Telegram
+  // Tell the browser this region is meant for vertical pan; otherwise
+  // some WebViews intercept the touch as a tap on the first child.
+  touch-action: pan-y;
 }
 
 .mb-gal__empty {
