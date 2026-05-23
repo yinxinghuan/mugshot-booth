@@ -237,6 +237,35 @@
     padding: 16px 8px;
     font-size: 18px;
   }
+  /* When the chip wraps a file <input>, render as a label that looks
+     identical to a button. Telegram WebView triggers the native file
+     picker reliably for direct label clicks, unlike .click() on hidden
+     inputs which Telegram blocks. */
+  &--as-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+  }
+  &__file {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    /* Some Telegram webviews require the input to be reachable as a
+       pointer target, not just `display:none`. opacity:0 keeps it
+       interactive while invisible. */
+    appearance: none;
+    -webkit-appearance: none;
+  }
 }
 
 /* Actions row */

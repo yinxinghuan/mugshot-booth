@@ -4,7 +4,7 @@
 // actions: TAKE THE SHOT (camera capture), UPLOAD PHOTO (gallery), VIEW
 // GALLERY (other suspects).
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import HalftonePhoto from './HalftonePhoto';
 import RedRingWash from './RedRingWash';
 import MetaStrip from './MetaStrip';
@@ -26,17 +26,16 @@ export default function BoothScreen({
   onSubmit,
   onWall,
   booked,
-  hasFirstTouched,
+  hasFirstTouched: _hasFirstTouched,
   errorLabel,
 }: Props) {
-  const cameraInput = useRef<HTMLInputElement>(null);
-  const uploadInput = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<{ url: string; file: File } | null>(null);
 
-  const openCamera = () => { playClick(); cameraInput.current?.click(); };
-  const openLibrary = () => { playClick(); uploadInput.current?.click(); };
-
+  // File picker uses native <label> + nested <input> pattern. Telegram
+  // Mini App / Aigram WebView reliably opens the OS picker for direct
+  // label clicks, but blocks programmatic `inputRef.current.click()`.
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    playClick();
     const file = e.target.files?.[0];
     if (!file) return;
     if (preview) URL.revokeObjectURL(preview.url);
@@ -92,40 +91,28 @@ export default function BoothScreen({
 
       {errorLabel ? <div className="mb-booth__error">{errorLabel}</div> : null}
 
-      <input
-        ref={cameraInput}
-        type="file"
-        accept="image/*"
-        capture="user"
-        style={{ display: 'none' }}
-        onChange={onFile}
-      />
-      <input
-        ref={uploadInput}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={onFile}
-      />
-
       <div className="mb-actions-stack">
         {preview ? (
           <>
             <button
               type="button"
-              className={`mb-chip mb-chip--primary ${!hasFirstTouched ? '' : ''}`}
+              className="mb-chip mb-chip--primary"
               onPointerDown={handleBook}
             >
               {t('cta_book')}
             </button>
             <div className="mb-actions-stack__row">
-              <button
-                type="button"
-                className="mb-chip mb-chip--secondary mb-chip--small"
-                onPointerDown={() => { playClick(); openLibrary(); }}
-              >
+              {/* Replace photo — native label so Telegram WebView opens the picker */}
+              <label className="mb-chip mb-chip--secondary mb-chip--small mb-chip--as-label">
+                <input
+                  type="file"
+                  accept="image/*"
+                  name="mb-replace-photo"
+                  className="mb-chip__file"
+                  onChange={onFile}
+                />
                 {t('cta_replace')}
-              </button>
+              </label>
               <button
                 type="button"
                 className="mb-chip mb-chip--ghost mb-chip--small"
@@ -137,21 +124,28 @@ export default function BoothScreen({
           </>
         ) : (
           <>
-            <button
-              type="button"
-              className="mb-chip mb-chip--primary"
-              onPointerDown={openCamera}
-            >
+            <label className="mb-chip mb-chip--primary mb-chip--as-label">
+              <input
+                type="file"
+                accept="image/*"
+                capture="user"
+                name="mb-camera"
+                className="mb-chip__file"
+                onChange={onFile}
+              />
               {t('cta_take')}
-            </button>
+            </label>
             <div className="mb-actions-stack__row">
-              <button
-                type="button"
-                className="mb-chip mb-chip--secondary mb-chip--small"
-                onPointerDown={openLibrary}
-              >
+              <label className="mb-chip mb-chip--secondary mb-chip--small mb-chip--as-label">
+                <input
+                  type="file"
+                  accept="image/*"
+                  name="mb-library"
+                  className="mb-chip__file"
+                  onChange={onFile}
+                />
                 {t('cta_upload')}
-              </button>
+              </label>
               <button
                 type="button"
                 className="mb-chip mb-chip--ghost mb-chip--small"
