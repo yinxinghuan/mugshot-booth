@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
+// CaseFile — the result screen. Hero is the 4-line headline charge
+// passing through the red ring wash. Below: massive halftone mugshot,
+// the GUILTY verdict stamp, supporting charges, plea, stats, actions.
+
+import { useMemo } from 'react';
+import HalftonePhoto from './HalftonePhoto';
+import RedRingWash from './RedRingWash';
+import MetaStrip from './MetaStrip';
+import TicketStub from './TicketStub';
+import Residue from './Residue';
 import { t } from '../i18n';
-import { playStamp, playClick } from '../utils/audio';
-import StampBadge from './StampBadge';
+import { playClick } from '../utils/audio';
+import { splitHeadline } from '../utils/headline';
 import type { Mugshot } from '../types';
 
 interface Props {
@@ -16,133 +25,126 @@ interface Props {
 
 export default function CaseFile({
   mugshot,
-  viewMode,
+  viewMode: _viewMode,
   onNew,
   onWall,
   onShare,
   shareLabel,
   shareDisabled,
 }: Props) {
-  // Stamp lands ~600ms after mount (fresh booking only).
-  const [stamped, setStamped] = useState(viewMode === 'gallery');
-  useEffect(() => {
-    if (viewMode === 'gallery') return;
-    const id = setTimeout(() => {
-      setStamped(true);
-      playStamp();
-    }, 700);
-    return () => clearTimeout(id);
-  }, [viewMode]);
+  const { l1, l2, l3, l4 } = useMemo(
+    () => splitHeadline(mugshot.charges.headline),
+    [mugshot.charges.headline],
+  );
 
   return (
-    <div className="mb-case">
-      <div className="mb-case__paper">
-        <div className="mb-case__header">
-          <div className="mb-case__brand">
-            <div className="mb-case__brand-title">ALTERU POLICE DEPT.</div>
-            <div className="mb-case__brand-sub">CONFIDENTIAL · CASE FILE</div>
-          </div>
-          <div className="mb-case__case-no">
-            <div className="mb-case__case-label">{t('label_case')}</div>
-            <div className="mb-case__case-val">{mugshot.caseNumber}</div>
-          </div>
-        </div>
+    <>
+      <Residue />
+      <div className="mb-dash mb-dash--tl" aria-hidden="true">– – – –</div>
+      <div className="mb-dash mb-dash--tr" aria-hidden="true">– – – –</div>
+      <div className="mb-dash mb-dash--ml" aria-hidden="true">– – – –</div>
+      <div className="mb-dash mb-dash--mr" aria-hidden="true">– – – –</div>
 
-        <div className="mb-case__body">
-          <div className="mb-case__photo-block">
-            <div className="mb-case__photo-frame">
-              {mugshot.imageUrl ? (
-                <img
-                  className="mb-case__photo"
-                  src={mugshot.imageUrl}
-                  alt="mugshot"
-                  draggable={false}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ) : null}
-              <div className="mb-case__photo-placeholder">
-                <span>PHOTO</span>
-                <span>PENDING</span>
-              </div>
-              <div className="mb-case__photo-corners">
-                <span /><span /><span /><span />
-              </div>
+      <MetaStrip
+        left="ALTERU PD"
+        center={`CASE FILE · ${mugshot.bookingDate.replace(/-/g,'.')}`}
+        right={shortCase(mugshot.caseNumber)}
+      />
+      <TicketStub>
+        {mugshot.precinct} · INTAKE FORM A · OFFICER ALG-04
+      </TicketStub>
+
+      <div className="mb-stamp mb-stamp--solid" style={{ top: 38, right: 14, transform: 'rotate(4deg)' }}>
+        WANTED
+      </div>
+
+      <RedRingWash style={{ position: 'absolute', top: 50 }} />
+
+      <div className="mb-result__head">
+        {l1 && <div className="mb-result__head__l1">{l1}</div>}
+        {l2 && <div className="mb-result__head__l2">{l2}</div>}
+        {l3 && <div className="mb-result__head__l3">{l3}</div>}
+        {l4 && <div className="mb-result__head__l4">{l4}</div>}
+      </div>
+
+      <div className="mb-result__mug">
+        <div className="mb-result__photo">
+          {mugshot.imageUrl ? (
+            <HalftonePhoto src={mugshot.imageUrl} width={320} height={400} />
+          ) : (
+            <div className="mb-result__photo-fallback">
+              <span>PHOTO</span>
+              <span>PENDING</span>
             </div>
-            <div className="mb-case__photo-caption">
-              FRONT VIEW — INTAKE
-            </div>
-          </div>
-
-          <div className="mb-case__info">
-            <InfoRow label={t('label_date')} value={mugshot.bookingDate} />
-            <InfoRow label={t('label_height')} value={mugshot.height} />
-            <InfoRow label={t('label_eyes')} value={mugshot.eyeColor} />
-            <InfoRow label={t('label_precinct')} value={mugshot.precinct} />
-            <div className="mb-case__section-label">{t('label_marks')}</div>
-            <div className="mb-case__marks">{mugshot.charges.distinguishingMarks}</div>
-            <div className="mb-case__section-label">{t('label_plea')}</div>
-            <div className="mb-case__plea">{mugshot.charges.plea}</div>
-          </div>
-        </div>
-
-        <div className="mb-case__charges">
-          <div className="mb-case__charges-label">{t('label_charges')}</div>
-          <div className="mb-case__headline">{mugshot.charges.headline}</div>
-          <ol className="mb-case__supporting">
-            {mugshot.charges.supporting.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ol>
-        </div>
-
-        <div className={`mb-case__verdict ${stamped ? 'is-stamped' : ''}`}>
-          <StampBadge verdict={mugshot.verdict} />
-        </div>
-
-        <div className="mb-case__footer">
-          <span>BOOKING OFFICER: ALG-04</span>
-          <span>FILED: {mugshot.bookingDate}</span>
-          <span>ALTERU.STUDIO</span>
+          )}
         </div>
       </div>
 
-      <div className="mb-case__actions">
+      <div className="mb-stamp mb-stamp--solid is-red" style={{ top: 384, left: 14, transform: 'rotate(-10deg)' }}>
+        EVIDENCE
+      </div>
+
+      <div className="mb-result__guilty mb-stamp mb-stamp--guilty">
+        <div className="mb-stamp__big">{t(verdictKey(mugshot.verdict))}</div>
+        <div className="mb-stamp__sub">ALTERU PD</div>
+      </div>
+
+      <div className="mb-result__body">
+        <div className="mb-result__charges-label">{t('label_charges_further')}</div>
+        <ol className="mb-result__charges">
+          {mugshot.charges.supporting.slice(0, 3).map((c, i) => (
+            <li key={i} data-n={['i','ii','iii','iv'][i]}>{c}</li>
+          ))}
+        </ol>
+        <div className="mb-result__plea">{mugshot.charges.plea.replace(/^"|"$/g, '')}</div>
+      </div>
+
+      <div className="mb-result__stats">
+        <span>HT<b>{stripParens(mugshot.height)}</b></span>
+        <span>EYES<b>{mugshot.eyeColor.toUpperCase()}</b></span>
+        <span>PCT<b>{precinctShort(mugshot.precinct)}</b></span>
+      </div>
+
+      <div className="mb-actions">
         <button
           type="button"
-          className="mb-btn mb-btn--secondary"
+          className="mb-chip mb-chip--secondary"
           onPointerDown={() => { playClick(); onWall(); }}
         >
-          {t('cta_wall')}
+          {t('cta_wall_short')}
         </button>
-        {onShare ? (
-          <button
-            type="button"
-            className="mb-btn mb-btn--secondary"
-            disabled={shareDisabled}
-            onPointerDown={() => { playClick(); onShare(); }}
-          >
-            {shareLabel || t('cta_share')}
-          </button>
-        ) : null}
         <button
           type="button"
-          className="mb-btn mb-btn--primary"
+          className="mb-chip mb-chip--primary"
           onPointerDown={() => { playClick(); onNew(); }}
         >
           {t('cta_new')}
         </button>
       </div>
-    </div>
+      {/* SHARE wired but not in the action row — keep the 2-button layout
+          consistent with the approved mockup. Re-add as a smaller icon
+          action later if needed. */}
+      {onShare ? <span style={{ display: 'none' }} data-label={shareLabel} aria-disabled={shareDisabled} /> : null}
+    </>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="mb-case__row">
-      <span className="mb-case__row-label">{label}</span>
-      <span className="mb-case__row-val">{value}</span>
-    </div>
-  );
+function verdictKey(v: Mugshot['verdict']): string {
+  if (v === 'GUILTY') return 'verdict_guilty';
+  if (v === 'AWAITING TRIAL') return 'verdict_awaiting';
+  return 'verdict_bail';
+}
+function shortCase(caseNumber: string): string {
+  const m = caseNumber.match(/-(\d+)$/);
+  if (!m) return caseNumber;
+  return `NO. ${m[1].slice(-3)}`;
+}
+function stripParens(s: string): string {
+  return s.replace(/\s*\(.*\)\s*/, '').trim();
+}
+function precinctShort(precinct: string): string {
+  // "PRECINCT 17: SLOW SIDE" → "17 · SLOW"
+  const m = precinct.match(/PRECINCT\s*(\d+):?\s*(\w+)/i);
+  if (!m) return precinct.slice(0, 12);
+  return `${m[1]} · ${m[2].toUpperCase()}`;
 }

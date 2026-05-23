@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Mockup A — Risograph Case Poster v2 (legibility pass)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Knewave&family=Big+Shoulders+Stencil+Display:wght@800;900&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:    #efe4c8;
+    --paper-deep:#e6d8b4;
+    --blue:     #1d33c4;
+    --blue-deep:#0e1f8a;
+    --red:      #e6311d;
+    --red-deep: #a52016;
+    --ink:      #0e0e0e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: #e8e1d0;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .frame {
+    width: min(420px, 100%);
+    aspect-ratio: 414/896;
+    background-color: var(--paper);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0,0,0,.18);
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    padding: 14px 22px 14px;
+    gap: 8px;
+  }
+
+  /* Section 1: case meta strip */
+  .meta-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono'; font-size: 10px; letter-spacing: .2em;
+    color: var(--blue-deep); text-transform: uppercase;
+    padding: 2px 0 6px;
+    border-bottom: 1.5px solid var(--blue-deep);
+  }
+  .meta-strip .center { font-weight: 700; }
+
+  /* Section 2: headline (Knewave hand-painted, blue, 4 lines, on clean
+     cream — no wash interference) */
+  .headline {
+    text-align: center;
+    font-family: 'Knewave', cursive;
+    color: var(--blue);
+    line-height: 0.98;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+    filter: url(#headlineRough);
+    padding: 6px 0 4px;
+  }
+  .headline .l1 { font-size: 38px; }
+  .headline .l2 { font-size: 60px; transform: skew(-2deg); }
+  .headline .l3 { font-size: 24px; }
+  .headline .l4 { font-size: 70px; transform: skew(1.5deg); }
+
+  /* Section 3: photo + meta side-by-side (photo gets red wash halo behind) */
+  .mug {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+  }
+  .wash {
+    position: absolute;
+    width: 240px; height: 240px;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) translate(8px, -2px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wash svg { width: 100%; height: 100%; display: block; }
+
+  .photo-block {
+    position: relative;
+    z-index: 2;
+    width: 178px; height: 222px;
+    transform: rotate(-1deg);
+  }
+  .photo-block canvas {
+    width: 100%; height: 100%; display: block;
+    mix-blend-mode: multiply;
+  }
+  .photo-caption {
+    margin-top: 6px;
+    text-align: center;
+    font-family: 'IBM Plex Mono'; font-size: 9.5px; letter-spacing: .24em;
+    color: var(--blue-deep);
+  }
+
+  /* GUILTY — one stamp only, lands on photo bottom-right corner */
+  .stamp-guilty {
+    position: absolute;
+    z-index: 3;
+    bottom: 18px; right: -2px;
+    transform: rotate(-12deg);
+    transform-origin: bottom right;
+    color: var(--red);
+    border: 4px double currentColor;
+    padding: 6px 14px 5px;
+    text-align: center;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    line-height: 1;
+    opacity: .94;
+    filter: url(#stampRough);
+  }
+  .stamp-guilty .big { font-size: 32px; letter-spacing: .04em; }
+  .stamp-guilty .sub { font-size: 9px; letter-spacing: .24em; margin-top: 4px; opacity: .85; }
+
+  /* Section 4: charges body */
+  .body {
+    padding: 0 2px;
+  }
+  .charges-label {
+    font-family: 'IBM Plex Mono'; font-weight: 700;
+    font-size: 10px; letter-spacing: .22em;
+    color: var(--red);
+    margin-bottom: 4px;
+  }
+  .charges-list {
+    list-style: none;
+    margin: 0 0 8px; padding: 0;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 800;
+    font-size: 16px; letter-spacing: .03em;
+    line-height: 1.3; color: var(--ink);
+    text-transform: uppercase;
+  }
+  .charges-list li {
+    padding: 1px 0;
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 4px;
+  }
+  .charges-list li::before {
+    content: attr(data-n);
+    color: var(--red); font-weight: 900;
+  }
+  .plea {
+    font-family: 'Special Elite';
+    font-size: 13px;
+    color: var(--blue-deep);
+    line-height: 1.4;
+  }
+  .plea::before { content: '— '; }
+
+  /* Section 5: physical-description row */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 8px;
+    padding: 8px 0 6px;
+    border-top: 1.5px dashed var(--blue-deep);
+    border-bottom: 1.5px dashed var(--blue-deep);
+  }
+  .stats .cell {
+    text-align: center;
+    font-family: 'IBM Plex Mono'; font-size: 9px;
+    letter-spacing: .2em;
+    color: var(--blue-deep);
+    text-transform: uppercase;
+  }
+  .stats .cell b {
+    display: block;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 14px;
+    color: var(--ink);
+    margin-top: 2px;
+    letter-spacing: .04em;
+  }
+
+  /* Section 6: actions */
+  .actions {
+    display: flex; gap: 10px;
+    padding-top: 4px;
+  }
+  .chip {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 14px; letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--blue);
+    border: none;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--red);
+  }
+  .chip.red { background: var(--red); box-shadow: 3px 3px 0 var(--blue); }
+
+  /* Decorative: a couple of subtle ink residue dots, edges only */
+  .residue {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  }
+
+  .filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<svg class="filters" aria-hidden="true">
+  <defs>
+    <filter id="stampRough">
+      <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" seed="3" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="headlineRough">
+      <feTurbulence type="fractalNoise" baseFrequency="2.0" numOctaves="1" seed="7" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="0.7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="washWobble">
+      <feTurbulence baseFrequency="0.014" numOctaves="2" seed="6"/>
+      <feDisplacementMap in="SourceGraphic" scale="14"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="frame">
+
+  <div class="residue">
+    <svg viewBox="0 0 414 896" preserveAspectRatio="none" style="width:100%;height:100%">
+      <circle cx="22"  cy="430" r="1.5" fill="#e6311d" opacity=".55"/>
+      <circle cx="380" cy="74"  r="1.0" fill="#e6311d" opacity=".5"/>
+      <circle cx="298" cy="800" r="1.2" fill="#1d33c4" opacity=".5"/>
+      <circle cx="186" cy="860" r="1.0" fill="#e6311d" opacity=".5"/>
+    </svg>
+  </div>
+
+  <!-- 1. Case meta strip -->
+  <div class="meta-strip">
+    <span>ALTERU PD</span>
+    <span class="center">CASE FILE · 26.05.2026</span>
+    <span>NO. 042</span>
+  </div>
+
+  <!-- 2. Headline -->
+  <div class="headline">
+    <div class="l1">LOITERING</div>
+    <div class="l2">WITH</div>
+    <div class="l3">INTENT TO</div>
+    <div class="l4">VIBE</div>
+  </div>
+
+  <!-- 3. Mug + red wash halo + GUILTY stamp -->
+  <div class="mug">
+    <div class="wash" aria-hidden="true">
+      <svg viewBox="0 0 240 240">
+        <g filter="url(#washWobble)">
+          <circle cx="120" cy="120" r="108" fill="#e6311d" opacity="0.92"/>
+        </g>
+      </svg>
+    </div>
+    <div class="photo-block">
+      <canvas id="halftone" width="356" height="444"></canvas>
+      <img id="srcPhoto" src="/mugshot-booth/demo_mugshot.jpg" alt="" style="display:none" crossorigin="anonymous"/>
+      <div class="stamp-guilty">
+        <div class="big">GUILTY</div>
+        <div class="sub">ALTERU PD</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Supporting charges + plea -->
+  <div class="body">
+    <div class="charges-label">FURTHER CHARGES</div>
+    <ol class="charges-list">
+      <li data-n="i">Possession of unsent texts after midnight</li>
+      <li data-n="ii">Failure to maintain eye contact during obligation</li>
+      <li data-n="iii">Disorderly hope in the first degree</li>
+    </ol>
+    <div class="plea">"It wasn't me. It was vibes."</div>
+  </div>
+
+  <!-- 5. Physical description row -->
+  <div class="stats">
+    <div class="cell">HEIGHT<b>5'09"</b></div>
+    <div class="cell">EYES<b>WIFI-BAR GREY</b></div>
+    <div class="cell">PRECINCT<b>17 · SLOW</b></div>
+  </div>
+
+  <!-- 6. Actions -->
+  <div class="actions">
+    <button class="chip">ROGUE'S GALLERY</button>
+    <button class="chip red">NEW BOOKING</button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const INK = '#1d33c4';
+    const CELL = 3.4;
+    const JITTER = 0.30;
+    const RADIUS_VAR = 0.12;
+
+    const img = document.getElementById('srcPhoto');
+    const canvas = document.getElementById('halftone');
+
+    function process() {
+      const W = canvas.width;
+      const H = canvas.height;
+      const scratch = document.createElement('canvas');
+      scratch.width = W;
+      scratch.height = H;
+      const sctx = scratch.getContext('2d');
+      const ar = img.naturalWidth / img.naturalHeight;
+      const tar = W / H;
+      let sw, sh, sx, sy;
+      if (ar > tar) {
+        sh = img.naturalHeight;
+        sw = sh * tar;
+        sx = (img.naturalWidth - sw) / 2;
+        sy = 0;
+      } else {
+        sw = img.naturalWidth;
+        sh = sw / tar;
+        sx = 0;
+        sy = (img.naturalHeight - sh) / 2;
+      }
+      sctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      sctx.globalCompositeOperation = 'multiply';
+      sctx.fillStyle = 'rgba(0,0,0,0.08)';
+      sctx.fillRect(0,0,W,H);
+      sctx.globalCompositeOperation = 'source-over';
+      const data = sctx.getImageData(0, 0, W, H).data;
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = INK;
+      const angle = -8 * Math.PI / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      let seed = 1234;
+      function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+
+      const gridR = Math.ceil(Math.hypot(W, H) / CELL) + 4;
+      for (let gy = -gridR; gy <= gridR; gy++) {
+        for (let gx = -gridR; gx <= gridR; gx++) {
+          const lx = gx * CELL;
+          const ly = gy * CELL;
+          const x = lx * cos - ly * sin + W / 2;
+          const y = lx * sin + ly * cos + H / 2;
+          if (x < -CELL || x > W + CELL || y < -CELL || y > H + CELL) continue;
+          let lum = 0, count = 0;
+          for (let s = 0; s < 5; s++) {
+            const ox = (s - 2) * (CELL / 6);
+            const sxp = Math.max(0, Math.min(W - 1, Math.round(x + ox)));
+            const syp = Math.max(0, Math.min(H - 1, Math.round(y + ox)));
+            const idx = (syp * W + sxp) * 4;
+            const r = data[idx], g = data[idx+1], b = data[idx+2];
+            lum += (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            count++;
+          }
+          lum /= count;
+          const ink = Math.max(0, 1 - lum);
+          if (ink < 0.06) continue;
+          const baseR = (CELL / 2) * Math.sqrt(ink);
+          const r = baseR * (1 + (rnd() - 0.5) * RADIUS_VAR);
+          const jx = (rnd() - 0.5) * JITTER;
+          const jy = (rnd() - 0.5) * JITTER;
+          if (rnd() < 0.02) continue;
+          const dotAlpha = 0.82 + rnd() * 0.16;
+          ctx.globalAlpha = dotAlpha;
+          ctx.beginPath();
+          ctx.arc(x + jx, y + jy, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    if (img.complete && img.naturalWidth) process();
+    else img.addEventListener('load', process);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Mockup B — Folk Flyer Zine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Big+Shoulders+Stencil+Display:wght@800;900&family=Rye&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:     #eee0c2;
+    --paper-deep:#e2cf9d;
+    --red:       #d4321b;
+    --red-deep:  #a02012;
+    --ink:       #14110d;
+    --ink-soft:  #2a241a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .frame {
+    width: min(420px, 100%);
+    aspect-ratio: 414/896;
+    background: var(--paper);
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='0.95' numOctaves='2' seed='8'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.04  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-blend-mode: multiply;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 18px 60px rgba(0,0,0,.25);
+  }
+
+  .frame::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 40%, transparent 65%, rgba(0,0,0,.20) 100%);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  /* Top stamp logo */
+  .logo-stamp {
+    position: absolute;
+    top: 16px; left: 14px;
+    transform: rotate(-4deg);
+    z-index: 10;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 13px; letter-spacing: .12em;
+    line-height: 1.0;
+    color: var(--red);
+    filter: url(#rough);
+  }
+  .logo-stamp .sub {
+    font-size: 9px; letter-spacing: .25em;
+    color: var(--ink); margin-top: 1px;
+  }
+
+  /* Top arrows row — Folk style */
+  .arrows {
+    position: absolute;
+    top: 60px; left: 20px; right: 20px;
+    z-index: 5;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .arrow {
+    flex: 1; height: 22px;
+    background: var(--ink);
+    position: relative;
+    filter: url(#rough);
+    opacity: .92;
+  }
+  .arrow::after {
+    content: ''; position: absolute; right: -16px; top: -10px;
+    border-left: 22px solid var(--ink);
+    border-top: 21px solid transparent;
+    border-bottom: 21px solid transparent;
+  }
+  .arrow.red { background: var(--red); }
+  .arrow.red::after { border-left-color: var(--red); }
+  .arrow.flip { transform: scaleX(-1); }
+
+  .arrows .icon {
+    width: 30px; height: 30px;
+    color: var(--ink);
+    filter: url(#rough);
+  }
+
+  /* Charges headline — punk multi-size mix */
+  .head {
+    position: absolute;
+    top: 96px; left: 18px; right: 18px;
+    z-index: 5;
+    text-transform: uppercase;
+    line-height: 0.88;
+  }
+  .head .l-loit {
+    font-family: 'Rye', serif;
+    font-size: 56px;
+    color: var(--ink);
+    transform: translateX(-3px);
+  }
+  .head .l-with {
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: .15em;
+    margin: 2px 0 2px 6px;
+  }
+  .head .l-intent {
+    display: inline-block;
+    font-family: 'Rye', serif;
+    font-size: 36px;
+    color: var(--red);
+    transform: skew(-3deg) translateX(2px);
+    line-height: 0.9;
+  }
+  .head .l-vibe {
+    display: inline-block;
+    font-family: 'Bowlby One SC', serif;
+    font-size: 110px;
+    color: var(--red);
+    transform: translate(-6px, -22px) skew(2deg);
+    letter-spacing: -0.02em;
+    line-height: 0.8;
+    text-shadow:
+      2px 0 0 var(--ink),
+      0 2px 0 var(--ink);
+  }
+  .head .bang {
+    display: inline-block;
+    font-family: 'Bowlby One SC', serif;
+    font-size: 110px;
+    color: var(--ink);
+    transform: translate(-6px, -22px) rotate(8deg);
+    line-height: 0.8;
+  }
+
+  /* Mid icon strip — pictograms like Folk poster */
+  .icon-strip {
+    position: absolute;
+    top: 410px; left: 18px; right: 18px;
+    z-index: 5;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .pict {
+    width: 30px; height: 30px;
+    color: var(--ink);
+  }
+  .pict.red { color: var(--red); }
+  .icon-strip .div {
+    flex: 1; height: 2px; background: var(--ink);
+    filter: url(#rough);
+  }
+
+  /* Photo block — small, stamp-positioned like the umbrella in Folk poster */
+  .photo {
+    position: absolute;
+    top: 360px; right: 22px;
+    width: 110px; height: 138px;
+    z-index: 7;
+    transform: rotate(3deg);
+    box-shadow: 4px 4px 0 var(--red-deep);
+  }
+  .photo-frame {
+    width: 100%; height: 100%;
+    background: var(--paper-deep);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+  }
+  .photo-frame img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: url(#redblack);
+  }
+  .photo-frame::after {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle, rgba(20,17,13,.5) 0.7px, transparent 1.2px);
+    background-size: 3px 3px;
+    mix-blend-mode: multiply;
+    opacity: .4;
+  }
+
+  /* Supporting charges */
+  .charges {
+    position: absolute;
+    top: 460px; left: 18px;
+    right: 150px;
+    z-index: 5;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 13px;
+    line-height: 1.45;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .charges li::marker {
+    color: var(--red); font-weight: 900;
+  }
+  .charges li {
+    padding: 2px 0;
+  }
+
+  /* Stamps */
+  .stamp {
+    position: absolute;
+    z-index: 11;
+    color: var(--red);
+    filter: url(#rough);
+  }
+  .stamp-rect {
+    border: 2px solid currentColor;
+    padding: 4px 8px;
+    font-family: 'IBM Plex Mono'; font-weight: 700;
+    font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+  .stamp-livraria {
+    top: 240px; right: 30px;
+    transform: rotate(4deg);
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    padding: 6px 8px;
+    font-family: 'IBM Plex Mono'; font-weight: 700;
+    font-size: 9px; letter-spacing: .12em;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+  .stamp-livraria b {
+    display: block;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 11px; letter-spacing: .14em;
+    color: var(--ink);
+  }
+  .stamp-livraria .price {
+    color: var(--red); font-size: 10px;
+  }
+
+  .stamp-vice {
+    top: 250px; left: 18px;
+    transform: rotate(-6deg);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 4px 10px;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 12px; letter-spacing: .22em;
+  }
+
+  .stamp-guilty-flat {
+    bottom: 188px; right: 18px;
+    transform: rotate(-12deg);
+    z-index: 14;
+    color: var(--red);
+  }
+  .stamp-guilty-flat .ring {
+    border: 3px double currentColor;
+    padding: 8px 14px 5px;
+    text-align: center;
+    line-height: 1;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+  }
+  .stamp-guilty-flat .big { font-size: 30px; letter-spacing: .03em; }
+  .stamp-guilty-flat .sub {
+    font-size: 8.5px; letter-spacing: .22em; margin-top: 4px; opacity: .9;
+  }
+
+  /* Big '5' partial peeking like the Folk poster */
+  .ghost-num {
+    position: absolute;
+    top: 8px; right: -10px;
+    z-index: 3;
+    font-family: 'Rye', serif;
+    font-size: 96px;
+    color: var(--red);
+    opacity: .35;
+    line-height: 1;
+    transform: rotate(2deg);
+  }
+
+  /* Cross 'X' pictogram like Folk poster */
+  .cross {
+    position: absolute;
+    top: 188px; right: 32px;
+    z-index: 4;
+    font-family: 'Bowlby One SC';
+    font-size: 80px;
+    color: var(--red);
+    opacity: 0.75;
+    transform: rotate(-8deg);
+    filter: url(#rough);
+  }
+
+  /* Date block — like 26.07 in Folk poster */
+  .date-block {
+    position: absolute;
+    bottom: 162px; left: 18px;
+    z-index: 6;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 38px; color: var(--ink);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+    filter: url(#rough);
+  }
+  .date-block .y {
+    font-size: 13px; color: var(--red); letter-spacing: .18em;
+    display: block;
+    margin-top: 4px;
+  }
+
+  /* Plea */
+  .plea {
+    position: absolute;
+    bottom: 122px; left: 18px; right: 18px;
+    z-index: 6;
+    font-family: 'Special Elite';
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-align: left;
+  }
+  .plea::before { content: 'STATEMENT — '; font-family: 'IBM Plex Mono'; font-weight: 700; font-size: 10px; letter-spacing: .14em; color: var(--red); display: block; margin-bottom: 2px; }
+
+  /* Bottom meta */
+  .meta {
+    position: absolute;
+    bottom: 76px; left: 18px; right: 18px;
+    z-index: 5;
+    border-top: 2px solid var(--ink);
+    padding-top: 6px;
+    display: flex; justify-content: space-between;
+    font-family: 'IBM Plex Mono'; font-size: 9px; letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  /* Actions */
+  .actions {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex; gap: 8px;
+    padding: 14px;
+    justify-content: center;
+    z-index: 15;
+  }
+  .chip {
+    flex: 1;
+    text-align: center;
+    padding: 11px 8px;
+    font-family: 'Big Shoulders Stencil Display'; font-weight: 900;
+    font-size: 13px; letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--ink);
+    border: none;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--red);
+    filter: url(#rough);
+  }
+  .chip.red { background: var(--red); box-shadow: 3px 3px 0 var(--ink); color: var(--paper); }
+
+  .filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<svg class="filters" aria-hidden="true">
+  <defs>
+    <!-- Black+red duotone for photo -->
+    <filter id="redblack">
+      <feColorMatrix type="matrix" values="
+        0.30 0.59 0.11 0 0
+        0.30 0.59 0.11 0 0
+        0.30 0.59 0.11 0 0
+        0    0    0    1 0" />
+      <feComponentTransfer>
+        <feFuncR tableValues="0.83 0.10"/>
+        <feFuncG tableValues="0.78 0.10"/>
+        <feFuncB tableValues="0.62 0.08"/>
+      </feComponentTransfer>
+    </filter>
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="2" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="frame">
+
+  <div class="ghost-num">5</div>
+
+  <div class="logo-stamp">
+    MUGSHOT<br/>BOOTH!
+    <div class="sub">ALTERU PD · 2026</div>
+  </div>
+
+  <div class="arrows">
+    <div class="arrow flip"></div>
+    <svg class="icon" viewBox="0 0 30 30" fill="currentColor" aria-hidden="true">
+      <circle cx="15" cy="11" r="2"/><circle cx="15" cy="17" r="2"/><circle cx="15" cy="23" r="2"/>
+      <path d="M9 6 Q15 0 21 6 V11 H9 Z" />
+    </svg>
+    <div class="arrow red"></div>
+  </div>
+
+  <div class="head">
+    <div class="l-loit">LOITERING</div>
+    <div class="l-with">— WITH —</div>
+    <div class="l-intent">INTENT TO</div><br/>
+    <span class="l-vibe">VIBE</span><span class="bang">!</span>
+  </div>
+
+  <div class="stamp stamp-vice">VICE SQUAD · 17</div>
+
+  <div class="cross">×</div>
+
+  <div class="stamp stamp-livraria">
+    <b>PRECINCT 17</b>
+    SLOW SIDE<br/>R. BOSQUE 1.254
+    <div class="price">BAIL $00</div>
+  </div>
+
+  <div class="icon-strip">
+    <svg class="pict" viewBox="0 0 30 30" fill="currentColor" aria-hidden="true">
+      <rect x="5" y="6" width="20" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M5 10 H25" stroke="currentColor" stroke-width="2"/>
+      <path d="M11 14 V20 M19 14 V20 M11 17 H19" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+    <svg class="pict red" viewBox="0 0 30 30" fill="currentColor" aria-hidden="true">
+      <path d="M15 3 C8 3 7 11 7 14 C7 19 15 26 15 26 C15 26 23 19 23 14 C23 11 22 3 15 3 Z" fill="currentColor"/>
+    </svg>
+    <div class="div"></div>
+    <svg class="pict" viewBox="0 0 30 30" fill="currentColor" aria-hidden="true">
+      <circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M20 20 L26 26" stroke="currentColor" stroke-width="3"/>
+    </svg>
+    <svg class="pict red" viewBox="0 0 30 30" fill="currentColor" aria-hidden="true">
+      <path d="M6 8 Q11 4 16 8 Q21 12 26 8" stroke="currentColor" stroke-width="2.5" fill="none"/>
+      <path d="M6 14 Q11 10 16 14 Q21 18 26 14" stroke="currentColor" stroke-width="2.5" fill="none"/>
+      <path d="M6 20 Q11 16 16 20 Q21 24 26 20" stroke="currentColor" stroke-width="2.5" fill="none"/>
+    </svg>
+  </div>
+
+  <div class="photo">
+    <div class="photo-frame">
+      <img src="/mugshot-booth/demo_mugshot.jpg" alt="mugshot" />
+    </div>
+  </div>
+
+  <ol class="charges">
+    <li>Possession of unsent texts after midnight</li>
+    <li>Failure to maintain eye contact during obligation</li>
+    <li>Disorderly hope in the first degree</li>
+  </ol>
+
+  <div class="date-block">
+    23 . 05
+    <span class="y">A PARTIR DE 19H · 2026</span>
+  </div>
+
+  <div class="plea">"It wasn't me. It was vibes."</div>
+
+  <div class="meta">
+    <span>26.05.2026</span>
+    <span>OFFICER ALG-04</span>
+    <span>ALT-2026-00042</span>
+  </div>
+
+  <div class="stamp stamp-guilty-flat">
+    <div class="ring">
+      <div class="big">GUILTY</div>
+      <div class="sub">ALTERU PD</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="chip">ROGUE'S GALLERY</button>
+    <button class="chip red">NEW BOOKING</button>
+  </div>
+</div>
+
+</body>
+</html>

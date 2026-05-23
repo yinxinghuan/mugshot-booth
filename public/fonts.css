@@ -1,6 +1,8 @@
-/* Mugshot Booth — case file aesthetic.
- * Special Elite = manual typewriter (gritty, real impressions).
- * Stardos Stencil = stenciled government / evidence labels.
- * IBM Plex Mono = clean mono for forms / case numbers.
+/* Mugshot Booth — Risograph poster aesthetic.
+ *   Knewave                       = hand-painted brush headline (the punch).
+ *   Big Shoulders Stencil Display = stencil block — supporting type + meta.
+ *   Rye                           = cowboy-serif accent (occasional flourish).
+ *   Special Elite                 = typewritten plea / suspect statement.
+ *   IBM Plex Mono                 = ticket-stub / case numbers / micro-meta.
  */
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Stardos+Stencil:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Oswald:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Knewave&family=Big+Shoulders+Stencil+Display:wght@700;800;900&family=Rye&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;700&display=swap');

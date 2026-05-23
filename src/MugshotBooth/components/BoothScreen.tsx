@@ -1,8 +1,19 @@
+// Booth screen — landing.
+// Hero "STEP UP, SUSPECT" passes through the red ring wash. The camera
+// icon (or selfie preview) sits in the lower half of the ring. Three
+// actions: TAKE THE SHOT (camera capture), UPLOAD PHOTO (gallery), VIEW
+// GALLERY (other suspects).
+
 import { useRef, useState } from 'react';
+import HalftonePhoto from './HalftonePhoto';
+import CameraIcon from './CameraIcon';
+import RedRingWash from './RedRingWash';
+import MetaStrip from './MetaStrip';
+import TicketStub from './TicketStub';
+import Residue from './Residue';
 import { t } from '../i18n';
 import { previewURL } from '../utils/selfie';
-import { playClick } from '../utils/audio';
-import HeightRuler from './HeightRuler';
+import { playClick, playShutter } from '../utils/audio';
 
 interface Props {
   onSubmit: (file: File) => void;
@@ -19,143 +30,136 @@ export default function BoothScreen({
   hasFirstTouched,
   errorLabel,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const uploadInput = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<{ url: string; file: File } | null>(null);
 
-  const openPicker = () => {
-    playClick();
-    inputRef.current?.click();
-  };
+  const openCamera = () => { playClick(); cameraInput.current?.click(); };
+  const openLibrary = () => { playClick(); uploadInput.current?.click(); };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Object URL revoked on next pick / submit.
     if (preview) URL.revokeObjectURL(preview.url);
     setPreview({ url: previewURL(file), file });
-    // Allow re-picking the same file by clearing the input value.
     e.target.value = '';
   };
 
   const handleBook = () => {
     if (!preview) return;
-    playClick();
+    playShutter();
     onSubmit(preview.file);
   };
 
-  const handleReplace = () => {
-    playClick();
-    inputRef.current?.click();
-  };
-
   return (
-    <div className="mb-booth">
-      <div className="mb-booth__wall">
-        <HeightRuler />
+    <>
+      <Residue />
+      <div className="mb-dash mb-dash--tl" aria-hidden="true">– – – –</div>
+      <div className="mb-dash mb-dash--tr" aria-hidden="true">– – – –</div>
+      <div className="mb-dash mb-dash--ml" aria-hidden="true">– – – –</div>
+      <div className="mb-dash mb-dash--mr" aria-hidden="true">– – – –</div>
+
+      <MetaStrip left="ALTERU PD" center="BOOKING · INTAKE" right="VICE SQUAD" />
+      <TicketStub>PRECINCT 17 · INTAKE · WALK-INS WELCOME · OFFICER ALG-04</TicketStub>
+
+      <RedRingWash style={{ position: 'absolute', top: 60 }} />
+
+      <div className="mb-booth__head">
+        <div className="mb-booth__head__l1">STEP UP,</div>
+        <div className="mb-booth__head__l2">SUSPECT</div>
       </div>
 
-      <div className="mb-booth__viewfinder">
-        {preview ? (
-          <img
-            className="mb-booth__preview"
-            src={preview.url}
-            alt="selfie preview"
-            draggable={false}
-          />
-        ) : (
-          <div className="mb-booth__placeholder">
-            <CameraIcon />
-            <div className="mb-booth__caption">{t('booth_camera_caption')}</div>
-            <div className="mb-booth__subcaption">{t('booth_camera_subcaption')}</div>
-          </div>
-        )}
-        <div className="mb-booth__reticle" />
-        <div className="mb-booth__corners">
-          <span /><span /><span /><span />
+      {preview ? (
+        <div className="mb-booth__preview">
+          <HalftonePhoto src={preview.url} width={240} height={300} />
         </div>
+      ) : (
+        <div className="mb-booth__camera">
+          <CameraIcon />
+        </div>
+      )}
+
+      <div className="mb-booth__floor">
+        {preview ? 'PHOTO ON FILE' : t('booth_camera_caption')}
+        <span className="mb-booth__floor__small">
+          {preview ? 'press BOOK SUSPECT to file the case' : t('booth_camera_subcaption')}
+        </span>
       </div>
 
-      <div className="mb-booth__sheet">
-        <div className="mb-booth__sheet-title">
-          ALTERU POLICE DEPARTMENT — INTAKE FORM
-        </div>
-        <div className="mb-booth__sheet-row">
-          <span>BOOKINGS THIS SESSION</span>
-          <span className="mb-booth__sheet-val">{String(booked).padStart(4, '0')}</span>
-        </div>
-        <div className="mb-booth__sheet-row">
-          <span>STATUS</span>
-          <span className="mb-booth__sheet-val">
-            {preview ? 'AWAITING BOOK' : 'AWAITING SUSPECT'}
-          </span>
-        </div>
-        {errorLabel ? (
-          <div className="mb-booth__sheet-error">{errorLabel}</div>
-        ) : null}
-      </div>
+      {errorLabel ? <div className="mb-booth__error">{errorLabel}</div> : null}
 
       <input
-        ref={inputRef}
+        ref={cameraInput}
         type="file"
         accept="image/*"
         capture="user"
         style={{ display: 'none' }}
         onChange={onFile}
       />
+      <input
+        ref={uploadInput}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={onFile}
+      />
 
-      <div className="mb-booth__actions">
+      <div className="mb-actions-stack">
         {preview ? (
           <>
             <button
               type="button"
-              className="mb-btn mb-btn--secondary"
-              onPointerDown={handleReplace}
-            >
-              {t('cta_replace')}
-            </button>
-            <button
-              type="button"
-              className="mb-btn mb-btn--primary"
+              className={`mb-chip mb-chip--primary ${!hasFirstTouched ? '' : ''}`}
               onPointerDown={handleBook}
             >
               {t('cta_book')}
             </button>
+            <div className="mb-actions-stack__row">
+              <button
+                type="button"
+                className="mb-chip mb-chip--secondary mb-chip--small"
+                onPointerDown={() => { playClick(); openLibrary(); }}
+              >
+                {t('cta_replace')}
+              </button>
+              <button
+                type="button"
+                className="mb-chip mb-chip--ghost mb-chip--small"
+                onPointerDown={() => { playClick(); onWall(); }}
+              >
+                {t('cta_wall')}
+              </button>
+            </div>
           </>
         ) : (
           <>
             <button
               type="button"
-              className="mb-btn mb-btn--secondary"
-              onPointerDown={() => { playClick(); onWall(); }}
+              className="mb-chip mb-chip--primary"
+              onPointerDown={openCamera}
             >
-              {t('cta_wall')}
+              {t('cta_take')}
             </button>
-            <button
-              type="button"
-              className={`mb-btn mb-btn--primary ${!hasFirstTouched ? 'mb-btn--pulse' : ''}`}
-              onPointerDown={openPicker}
-            >
-              {t('cta_upload')}
-            </button>
+            <div className="mb-actions-stack__row">
+              <button
+                type="button"
+                className="mb-chip mb-chip--secondary mb-chip--small"
+                onPointerDown={openLibrary}
+              >
+                {t('cta_upload')}
+              </button>
+              <button
+                type="button"
+                className="mb-chip mb-chip--ghost mb-chip--small"
+                onPointerDown={() => { playClick(); onWall(); }}
+              >
+                {t('cta_wall')}
+              </button>
+            </div>
           </>
         )}
+        <div className="mb-booth-count">— {String(booked).padStart(3, '0')} SUSPECTS BOOKED —</div>
       </div>
-    </div>
-  );
-}
-
-function CameraIcon() {
-  return (
-    <svg viewBox="0 0 96 96" className="mb-booth__cam">
-      {/* Old-school SLR silhouette */}
-      <rect x="8" y="26" width="80" height="56" rx="3" fill="#0a0908" stroke="#0a0908" />
-      <rect x="28" y="18" width="40" height="12" rx="2" fill="#0a0908" />
-      <circle cx="48" cy="54" r="20" fill="#1a1612" stroke="#2a241e" strokeWidth="2" />
-      <circle cx="48" cy="54" r="14" fill="#0a0908" />
-      <circle cx="48" cy="54" r="8" fill="#3a3128" />
-      <circle cx="42" cy="50" r="3" fill="#9b8b6f" />
-      <rect x="72" y="32" width="10" height="6" rx="1" fill="#bf3a2a" />
-      <rect x="14" y="32" width="8" height="4" rx="1" fill="#3a3128" />
-    </svg>
+    </>
   );
 }
