@@ -100,7 +100,12 @@ export default function Gallery({ community, mine, loaded, onBack, onView, onNew
               key={`${entry.userId}-${entry.mugshot.id}`}
               type="button"
               className="mb-gal__card"
-              onPointerDown={() => handleCardTap(entry)}
+              // onClick (not onPointerDown) — onPointerDown fires the moment
+              // a finger touches the row, before the browser decides whether
+              // it's a tap or a scroll. With onClick, the browser's built-in
+              // scroll detection cancels the click if the user dragged.
+              // See feedback_onclick_for_scrollable_lists.md
+              onClick={() => handleCardTap(entry)}
             >
               <div className="mb-gal__card-photo">
                 <WashBg shape={SHAPES[i % SHAPES.length]} />
