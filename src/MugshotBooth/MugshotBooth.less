@@ -1,0 +1,959 @@
+// Mugshot Booth — gritty B&W noir case-file aesthetic.
+// Palette:
+//   manila      #d8cdb4   — file folder body
+//   paper       #ede2c5   — case sheet (lighter manila)
+//   ink         #1a1612   — typewriter ink (off-black)
+//   shadow      #2a241e   — wood/leather edges
+//   redink      #a02617   — stamps, alerts
+//   warnamber   #7a4d18   — awaiting-trial stamp
+//   bail        #2a5a3a   — freed-on-bail stamp
+
+@manila: #d8cdb4;
+@paper: #ede2c5;
+@paper-dim: #d8c9a5;
+@ink: #1a1612;
+@ink-soft: #3a3128;
+@shadow: #2a241e;
+@redink: #a02617;
+@cream: #f5ecd2;
+@deep: #0e0c08;
+
+@font-serif: 'Stardos Stencil', 'Oswald', Impact, sans-serif;
+@font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+@font-type: 'Special Elite', 'IBM Plex Mono', monospace;
+
+.mb-root {
+  width: 100%;
+  height: 100%;
+  background: @manila;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(0, 0, 0, 0.08), transparent 60%),
+    radial-gradient(circle at 70% 80%, rgba(0, 0, 0, 0.1), transparent 60%);
+  position: relative;
+  overflow: hidden;
+  font-family: @font-mono;
+  color: @ink;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        135deg,
+        rgba(26, 22, 18, 0.04) 0 1px,
+        transparent 1px 4px
+      );
+    pointer-events: none;
+  }
+}
+
+.mb-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+// ─── Buttons ────────────────────────────────────────────────────────────
+
+.mb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 2px solid @ink;
+  background: @paper;
+  color: @ink;
+  font-family: @font-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 0;
+  box-shadow: 3px 3px 0 @ink;
+  transition: transform 80ms, box-shadow 80ms;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 @ink;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  &--primary {
+    background: @ink;
+    color: @cream;
+    border-color: @ink;
+    box-shadow: 3px 3px 0 @redink;
+  }
+  &--secondary {
+    background: @paper;
+    color: @ink;
+  }
+  &--ghost {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: @ink;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    padding: 4px 6px;
+    &:active:not(:disabled) {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+  &--small {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  &--pulse {
+    animation: mb-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes mb-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 3px 3px 0 @redink; }
+  50%      { transform: scale(1.03); box-shadow: 5px 5px 0 @redink; }
+}
+
+.mb-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  color: @ink;
+  font-family: @font-type;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.78;
+  pointer-events: none;
+  animation: mb-fadeflicker 1.6s ease-in-out infinite;
+  z-index: 5;
+}
+
+@keyframes mb-fadeflicker {
+  0%, 100% { opacity: 0.78; }
+  50%      { opacity: 0.35; }
+}
+
+// ─── Booth screen ───────────────────────────────────────────────────────
+
+.mb-booth {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 1fr auto auto auto;
+  padding: 18px 22px 22px;
+  gap: 16px;
+  align-items: center;
+  justify-items: center;
+
+  &__wall {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(180deg, #c6bba0 0%, #ad9f80 100%);
+    background-image:
+      repeating-linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.04) 0 6px,
+        transparent 6px 12px
+      ),
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 60%);
+    overflow: hidden;
+  }
+
+  &__viewfinder {
+    position: relative;
+    z-index: 1;
+    width: min(82vw, 320px);
+    aspect-ratio: 4 / 5;
+    background: @deep;
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.45),
+      inset 0 0 0 4px @ink,
+      inset 0 0 0 8px @paper-dim;
+    overflow: hidden;
+  }
+
+  &__preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.6) contrast(1.05);
+  }
+
+  &__placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: @cream;
+    text-align: center;
+    padding: 14px;
+  }
+
+  &__cam {
+    width: 80px;
+    height: 80px;
+  }
+
+  &__caption {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  &__subcaption {
+    font-family: @font-type;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+  }
+
+  &__reticle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.55);
+    }
+    &::before {
+      left: 50%; top: -10px; width: 1px; height: 8px; transform: translateX(-50%);
+    }
+    &::after {
+      left: 50%; bottom: -10px; width: 1px; height: 8px; transform: translateX(-50%);
+    }
+  }
+
+  &__corners {
+    position: absolute;
+    inset: 14px;
+    pointer-events: none;
+    span {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: rgba(255, 255, 255, 0.6);
+      border-style: solid;
+      border-width: 0;
+    }
+    span:nth-child(1) { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+    span:nth-child(2) { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+    span:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+    span:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+  }
+
+  &__sheet {
+    position: relative;
+    z-index: 1;
+    width: min(82vw, 340px);
+    background: @paper;
+    border: 1.5px solid @ink;
+    padding: 10px 14px 12px;
+    font-family: @font-type;
+    box-shadow: 4px 4px 0 rgba(26, 22, 18, 0.18);
+  }
+
+  &__sheet-title {
+    font-family: @font-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    border-bottom: 1px dashed @ink;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+
+  &__sheet-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 2px 0;
+    color: @ink;
+    span:first-child {
+      opacity: 0.75;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  &__sheet-val {
+    font-family: @font-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  &__sheet-error {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(160, 38, 23, 0.15);
+    border-left: 3px solid @redink;
+    color: @redink;
+    font-family: @font-type;
+    font-size: 12px;
+  }
+
+  &__actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    width: min(82vw, 340px);
+    .mb-btn {
+      flex: 1;
+    }
+  }
+}
+
+// ─── Height ruler ───────────────────────────────────────────────────────
+
+.mb-ruler {
+  position: absolute;
+  right: 6px;
+  top: 6%;
+  bottom: 4%;
+  width: 64px;
+  height: auto;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+// ─── Processing screen ─────────────────────────────────────────────────
+
+.mb-processing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px;
+  gap: 14px;
+  background: @manila;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.025) 0 2px,
+      transparent 2px 4px
+    );
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 6px;
+    border-bottom: 2px solid @ink;
+  }
+
+  &__stamp {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.18em;
+    color: @ink;
+    padding: 2px 8px;
+    border: 2.5px solid @redink;
+    color: @redink;
+    transform: rotate(-2deg);
+    background: rgba(160, 38, 23, 0.06);
+  }
+
+  &__case {
+    font-family: @font-type;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+  }
+
+  &__sheet {
+    flex: 1;
+    background: @paper;
+    border: 1.5px solid @ink;
+    box-shadow: 4px 4px 0 rgba(26, 22, 18, 0.2);
+    padding: 18px 18px 22px;
+    overflow: hidden;
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent 0 22px, rgba(26, 22, 18, 0.08) 22px 23px);
+      pointer-events: none;
+    }
+  }
+
+  &__type {
+    position: relative;
+    font-family: @font-type;
+    font-size: 15px;
+    line-height: 22px;
+    color: @ink;
+    white-space: pre-wrap;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  &__caret {
+    display: inline-block;
+    color: @ink;
+    animation: mb-blink 0.9s steps(2) infinite;
+  }
+
+  @keyframes mb-blink {
+    50% { opacity: 0; }
+  }
+
+  &__status {
+    padding-top: 4px;
+  }
+
+  &__label {
+    font-family: @font-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  &__bar {
+    height: 10px;
+    background: @paper;
+    border: 1.5px solid @ink;
+    overflow: hidden;
+  }
+
+  &__bar-fill {
+    height: 100%;
+    background: repeating-linear-gradient(
+      45deg,
+      @ink 0 8px,
+      @ink-soft 8px 16px
+    );
+    transition: width 600ms cubic-bezier(0.35, 0.85, 0.45, 1);
+  }
+
+  &__line-count {
+    margin-top: 6px;
+    text-align: right;
+    font-family: @font-type;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+  }
+}
+
+// ─── Case file (result) ─────────────────────────────────────────────────
+
+.mb-case {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 16px;
+  background: @manila;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.06), transparent 60%),
+    radial-gradient(circle at 10% 90%, rgba(0, 0, 0, 0.08), transparent 60%);
+  overflow-y: auto;
+
+  &__paper {
+    position: relative;
+    flex: 1;
+    background: @paper;
+    border: 1.5px solid @ink;
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.25),
+      inset 0 0 0 1px rgba(26, 22, 18, 0.1);
+    padding: 14px 16px 18px;
+    background-image:
+      repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.03) 0 1px, transparent 1px 3px);
+    &::before {
+      // Holes punched on left edge — old file folder feel.
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 14px;
+      bottom: 14px;
+      width: 8px;
+      background:
+        radial-gradient(circle, @manila 50%, transparent 51%) 0 0 / 8px 80px no-repeat,
+        radial-gradient(circle, @manila 50%, transparent 51%) 0 40% / 8px 80px no-repeat,
+        radial-gradient(circle, @manila 50%, transparent 51%) 0 80% / 8px 80px no-repeat;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 8px;
+    border-bottom: 2px solid @ink;
+    margin-bottom: 12px;
+  }
+
+  &__brand-title {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.14em;
+    line-height: 1;
+  }
+
+  &__brand-sub {
+    margin-top: 3px;
+    font-family: @font-type;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: @ink-soft;
+  }
+
+  &__case-no {
+    text-align: right;
+  }
+
+  &__case-label {
+    font-family: @font-type;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    opacity: 0.7;
+  }
+
+  &__case-val {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+
+  &__body {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  &__photo-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__photo-frame {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background: @deep;
+    box-shadow:
+      inset 0 0 0 3px @paper,
+      inset 0 0 0 4px @ink,
+      0 4px 0 rgba(26, 22, 18, 0.3);
+  }
+
+  &__photo {
+    position: absolute;
+    inset: 4px;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    object-fit: cover;
+    filter: grayscale(0.65) contrast(1.05);
+    z-index: 1;
+  }
+
+  &__photo-placeholder {
+    position: absolute;
+    inset: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: rgba(245, 236, 210, 0.4);
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.22em;
+    z-index: 0;
+  }
+
+  &__photo-corners {
+    position: absolute;
+    inset: 8px;
+    pointer-events: none;
+    span {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-color: rgba(255, 255, 255, 0.55);
+      border-style: solid;
+      border-width: 0;
+    }
+    span:nth-child(1) { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+    span:nth-child(2) { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+    span:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+    span:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+  }
+
+  &__photo-caption {
+    font-family: @font-type;
+    font-size: 10px;
+    text-align: center;
+    letter-spacing: 0.18em;
+    opacity: 0.78;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px dotted @ink;
+    padding: 2px 0;
+    gap: 8px;
+  }
+
+  &__row-label {
+    font-family: @font-type;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    opacity: 0.75;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  &__row-val {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-align: right;
+    color: @ink;
+  }
+
+  &__section-label {
+    font-family: @font-type;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    opacity: 0.75;
+    text-transform: uppercase;
+    margin-top: 8px;
+    border-top: 1px solid @ink;
+    padding-top: 4px;
+  }
+
+  &__marks, &__plea {
+    font-family: @font-type;
+    font-size: 12px;
+    line-height: 1.45;
+    color: @ink;
+  }
+
+  &__plea {
+    font-style: italic;
+  }
+
+  &__charges {
+    position: relative;
+    background: @paper-dim;
+    border: 2px solid @ink;
+    padding: 10px 14px 14px;
+    margin-bottom: 10px;
+  }
+
+  &__charges-label {
+    font-family: @font-type;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    opacity: 0.8;
+    margin-bottom: 4px;
+  }
+
+  &__headline {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.15;
+    letter-spacing: 0.04em;
+    color: @ink;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+
+  &__supporting {
+    margin: 0;
+    padding-left: 22px;
+    font-family: @font-type;
+    font-size: 13px;
+    line-height: 1.5;
+    li {
+      padding: 1px 0;
+      &::marker {
+        font-weight: 700;
+      }
+    }
+  }
+
+  &__verdict {
+    position: absolute;
+    right: 18px;
+    top: 38%;
+    opacity: 0;
+    transform: rotate(-15deg) scale(2.4);
+    transition: opacity 220ms ease-out, transform 220ms cubic-bezier(0.45, 1.8, 0.4, 1);
+    pointer-events: none;
+    z-index: 2;
+    &.is-stamped {
+      opacity: 0.92;
+      transform: rotate(-15deg) scale(1);
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid @ink;
+    font-family: @font-type;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: @ink-soft;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    .mb-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 8px;
+      font-size: 12px;
+    }
+  }
+}
+
+// ─── Stamp badge ────────────────────────────────────────────────────────
+
+.mb-stamp {
+  display: inline-block;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.1));
+  &__ring {
+    border: 4px double currentColor;
+    padding: 6px 14px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.02);
+  }
+  &__text {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+  &__sub {
+    font-family: @font-type;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+}
+
+// ─── Gallery (rogue's wall) ─────────────────────────────────────────────
+
+.mb-gallery {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px 16px;
+  background: #b3a685;
+  background-image:
+    radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 0.18), transparent 60%),
+    repeating-linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.05) 0 1px,
+      transparent 1px 4px
+    );
+  color: @cream;
+  overflow: hidden;
+
+  &__header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  &__title {
+    text-align: center;
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.22em;
+    color: @ink;
+    text-shadow: 1px 1px 0 rgba(255, 240, 200, 0.4);
+  }
+
+  &__case-count {
+    font-family: @font-type;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: @ink;
+    opacity: 0.85;
+  }
+
+  &__board {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: min-content;
+    gap: 18px 16px;
+    overflow-y: auto;
+    padding: 8px 6px 16px;
+    align-content: start;
+  }
+
+  &__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 28px 16px;
+    font-family: @font-type;
+    font-size: 13px;
+    color: @ink;
+    opacity: 0.75;
+  }
+
+  &__card {
+    position: relative;
+    background: @paper;
+    border: 1.5px solid @ink;
+    padding: 8px 8px 10px;
+    transform: rotate(var(--tilt, 0deg));
+    box-shadow: 3px 4px 0 rgba(26, 22, 18, 0.3);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 100ms;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    touch-action: manipulation;
+    &:active {
+      transform: rotate(var(--tilt, 0deg)) translate(1px, 1px);
+    }
+  }
+
+  &__tape {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    width: 56px;
+    height: 14px;
+    background: rgba(220, 180, 120, 0.78);
+    border: 1px solid rgba(160, 130, 80, 0.4);
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &__card-photo {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background: @deep;
+    margin-bottom: 6px;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(0.7) contrast(1.05);
+    }
+  }
+
+  &__card-stamp {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    transform: rotate(-10deg) scale(0.45);
+    transform-origin: bottom right;
+    opacity: 0.95;
+    pointer-events: none;
+  }
+
+  &__card-meta {
+    color: @ink;
+  }
+
+  &__card-name {
+    font-family: @font-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+
+  &__card-case {
+    font-family: @font-type;
+    font-size: 10px;
+    opacity: 0.7;
+    letter-spacing: 0.1em;
+    margin-bottom: 2px;
+  }
+
+  &__card-headline {
+    font-family: @font-type;
+    font-size: 11px;
+    line-height: 1.3;
+    color: @ink;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  &__own {
+    text-align: center;
+    margin: 6px 0;
+    font-family: @font-type;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: @ink;
+    opacity: 0.78;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    padding-top: 8px;
+    .mb-btn {
+      width: min(80vw, 320px);
+    }
+  }
+}
