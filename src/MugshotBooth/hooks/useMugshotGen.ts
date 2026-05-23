@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
-import { useUpload } from '@shared/runtime';
+import { useGenImage, useUpload } from '@shared/runtime';
 import { prepareSelfie } from '../utils/selfie';
 import {
   CHARGES_SYSTEM,
   METADATA_SYSTEM,
+  buildMugshotPrompt,
   parseCharges,
   parseMetadata,
 } from '../utils/prompts';
@@ -43,6 +44,7 @@ export interface UseMugshotGen {
 }
 
 export function useMugshotGen(): UseMugshotGen {
+  const { generate: genImg } = useGenImage();
   const { upload } = useUpload();
 
   const [loading, setLoading] = useState(false);
@@ -89,26 +91,23 @@ export function useMugshotGen(): UseMugshotGen {
 
         chargesPromise.then(() => setStage('booking'));
 
-        // 3) NO img2img anymore. We tried wdabuliu's img2img with strong
-        //    "preserve same face" prompts — it kept generating a generic
-        //    person that didn't look like the actual uploaded selfie.
-        //    The whole game falls apart if the suspect's face doesn't
-        //    belong to the suspect.
+        // 3) img2img — restored with a subject-agnostic prompt.
         //
-        //    Instead: use the uploaded selfie URL directly as the mug
-        //    photo. HalftonePhoto's Riso canvas treatment + the case-file
-        //    UI (red ring wash, GUILTY stamp, surrounding charges) is
-        //    what carries the "mugshot" aesthetic. The user's actual
-        //    face is guaranteed to appear because no AI is rewriting it.
-        //
-        //    Tradeoff: we lose the AI-generated background (precinct
-        //    wall, height ruler, ALTERU PD placard in the photo). Could
-        //    composite those back in with SVG overlays later.
-        const imageUrl = selfieUrl;
+        //    Previous prompts described the suspect as a person ("face,
+        //    head and shoulders, tired eyes") which led the API to
+        //    IGNORE the ref and generate a generic human, even when
+        //    the user uploaded a cat. The new buildMugshotPrompt()
+        //    describes only the SCENE (placard, wall, ruler, lighting,
+        //    film stock) and asserts that the ref IS the suspect. Now
+        //    the AI puts whatever the user uploaded — cat / face / dog
+        //    / plush — into the booking room.
+        const imgPrompt = buildMugshotPrompt(caseNumber);
+        const imagePromise = genImg({ prompt: imgPrompt, ref_url: selfieUrl });
 
-        const [charges, metadata] = await Promise.all([
+        const [charges, metadata, imageUrl] = await Promise.all([
           chargesPromise,
           metadataPromise,
+          imagePromise,
         ]);
 
         // 4) Pre-warm the image so the result page doesn't show a black tile.
@@ -143,7 +142,7 @@ export function useMugshotGen(): UseMugshotGen {
         setStage('');
       }
     },
-    [upload],
+    [genImg, upload],
   );
 
   return { generate, loading, stage, error };

@@ -52,32 +52,30 @@ Output ONLY the JSON object. No markdown, no prose.`;
  * the output portrait sits naturally on the case file.
  */
 export function buildMugshotPrompt(caseNumber: string): string {
-  // PROMPT STRUCTURE NOTE (Mugshot Booth v2.1, 2026-05-24):
+  // PROMPT STRUCTURE NOTE (Mugshot Booth v2.2, 2026-05-24):
   //
-  // The wdabuliu img2img API heavily weights the prompt — long style
-  // descriptions can override the reference's identity, producing a
-  // generic person instead of the actual uploaded face. To preserve
-  // face similarity we:
-  //   1. Lead with explicit identity-preservation instructions
-  //   2. Keep style descriptors short
-  //   3. End by reiterating "same face as reference"
+  // Subject-agnostic prompt. PREVIOUS prompts described the subject
+  // (face, head and shoulders, tired eyes, person) — the API then
+  // ignored the ref entirely and generated generic humans. Even when
+  // the user uploaded a CAT, the output was a human mugshot.
+  //
+  // Fix: don't describe the subject AT ALL. The reference image IS the
+  // subject. The prompt only paints the SCENE around it. This way the
+  // AI puts whatever you uploaded (cat, dog, face, plush toy, lamp)
+  // into the booking room.
   return [
-    // ─── Identity preservation (HIGHEST PRIORITY) ──────────────
-    'IMPORTANT: keep the exact same face as the reference image —',
-    'same facial features, same hair, same skin tone, same age, same identity.',
-    'Do NOT generate a different person. The output MUST clearly look like the person in the reference.',
-    // ─── What changes (style + scenery) ──────────────────────
-    'Convert the reference photo into a black-and-white police mugshot:',
-    'subject faces the camera straight-on, deadpan neutral expression,',
-    'holding a cream cardboard inmate ID placard at chest level with bold',
-    `black stenciled text reading "ALTERU PD" and "${caseNumber}" (legible).`,
-    'Background: scuffed concrete wall with vertical height ruler.',
-    'Lighting: single overhead booking-room fluorescent, high contrast.',
-    '35mm film grain, vintage 1970s precinct booking photo aesthetic.',
-    'Desaturated black-and-white only, no color tint.',
-    'Vertical portrait, 4:5 aspect ratio, no border, no extra text.',
+    // ─── Composition — scene only, no subject description ─────
+    'A black-and-white police mugshot photograph.',
+    'The reference image IS the suspect — preserve its shape, content, and identity exactly. Do not replace the subject.',
+    `The suspect is holding a cardboard inmate ID placard at center frame, with bold black hand-stenciled text on cream card stock reading "ALTERU PD" / "${caseNumber}" (both lines legible).`,
+    // ─── Background / lighting / film stock ───────────────────
+    'Behind the suspect: a scuffed off-white concrete wall with the classic vertical height-measurement ruler running floor-to-ceiling, horizontal tick marks every inch, numbered every foot.',
+    'Lighting: single harsh overhead booking-room fluorescent. Strong contrast. Slightly underexposed.',
+    'Aesthetic: vintage 1970s precinct booking photo. High-contrast black-and-white film. Heavy 35mm grain.',
+    'Color: desaturated black-and-white only.',
+    'Vertical portrait composition, 4:5 aspect ratio, no border, no frame, no extra text beyond the placard.',
     // ─── Identity reminder ──────────────────────────────────
-    'Again: the face MUST match the reference image exactly — same person.',
+    'CRITICAL: the suspect in the output must be the SAME entity as in the reference image — whether human, animal, or object. Do not substitute.',
   ].join(' ');
 }
 
