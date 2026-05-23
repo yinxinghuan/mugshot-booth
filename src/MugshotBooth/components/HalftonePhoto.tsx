@@ -64,17 +64,52 @@ export default function HalftonePhoto({
   }, [src, ink, cell, angle, width, height]);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
       className={className}
       style={{
-        display: 'block',
+        position: 'relative',
         width: `${width}px`,
         height: `${height}px`,
-        mixBlendMode: 'multiply',
+        display: 'block',
       }}
-      aria-label="halftone mugshot"
-    />
+    >
+      {/* Fallback layer — a plain <img> with NO crossOrigin so it always
+          loads even if the host (e.g., images.aiwaves.tech) doesn't send
+          CORS headers. Heavy grayscale + contrast makes it look noir even
+          without the halftone canvas. Multiply blend lets it tint
+          whatever wash sits behind it (red disc → red-tinted photo). */}
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          filter: 'grayscale(1) contrast(1.25) brightness(1.02)',
+          mixBlendMode: 'multiply',
+          zIndex: 1,
+        }}
+      />
+      {/* Halftone canvas. Requires CORS — if the image can't be read for
+          luminance sampling, this canvas stays empty and the <img>
+          fallback above shows through. */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'block',
+          width: `${width}px`,
+          height: `${height}px`,
+          mixBlendMode: 'multiply',
+          zIndex: 2,
+        }}
+        aria-label="halftone mugshot"
+      />
+    </div>
   );
 }
 
