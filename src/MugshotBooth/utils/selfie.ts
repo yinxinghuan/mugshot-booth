@@ -38,13 +38,11 @@ export async function prepareSelfie(file: File): Promise<Blob> {
   canvas.height = TARGET_H;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('selfie: could not get canvas 2d context');
-  // Light contrast lift only. Hard contrast was crushing skin tones and
-  // hurting the API's ability to preserve facial identity from the ref.
-  // The img2img model needs intermediate tones to read facial features;
-  // pre-baking the ref to near-binary B&W produced generic outputs.
-  ctx.filter = 'contrast(1.15) brightness(1.03)';
+  // No pre-processing filter on the upload. img2img rerenders the image
+  // entirely — pre-baking contrast in the ref just lost source detail
+  // for no gain. The final halftone in HalftonePhoto handles its own
+  // tonal range for the print look.
   ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, TARGET_W, TARGET_H);
-  ctx.filter = 'none';
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
