@@ -6,7 +6,6 @@
 
 import { useRef, useState } from 'react';
 import HalftonePhoto from './HalftonePhoto';
-import CameraIcon from './CameraIcon';
 import RedRingWash from './RedRingWash';
 import MetaStrip from './MetaStrip';
 import TicketStub from './TicketStub';
@@ -75,7 +74,11 @@ export default function BoothScreen({
         </div>
       ) : (
         <div className="mb-booth__camera">
-          <CameraIcon />
+          <HalftonePhoto
+            src="/mugshot-booth/demo_camera.jpg"
+            width={220}
+            height={268}
+          />
         </div>
       )}
 
