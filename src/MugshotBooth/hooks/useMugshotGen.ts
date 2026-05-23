@@ -1,10 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
-import { useGenImage, useUpload } from '@shared/runtime';
+import { useUpload } from '@shared/runtime';
 import { prepareSelfie } from '../utils/selfie';
 import {
   CHARGES_SYSTEM,
   METADATA_SYSTEM,
-  buildMugshotPrompt,
   parseCharges,
   parseMetadata,
 } from '../utils/prompts';
@@ -44,7 +43,6 @@ export interface UseMugshotGen {
 }
 
 export function useMugshotGen(): UseMugshotGen {
-  const { generate: genImg } = useGenImage();
   const { upload } = useUpload();
 
   const [loading, setLoading] = useState(false);
@@ -145,7 +143,7 @@ export function useMugshotGen(): UseMugshotGen {
         setStage('');
       }
     },
-    [genImg, upload],
+    [upload],
   );
 
   return { generate, loading, stage, error };
