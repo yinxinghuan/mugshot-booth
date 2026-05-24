@@ -802,7 +802,6 @@
   background: @paper-bright;
   padding: 8px 8px 10px;
   border: none;
-  cursor: pointer;
   transform: rotate(var(--tilt, 0deg));
   overflow: visible;
   -webkit-tap-highlight-color: transparent;
@@ -824,9 +823,32 @@
   &:nth-child(6n+4) { --tilt: -2.8deg; }
   &:nth-child(6n+5) { --tilt: -1.2deg; }
   &:nth-child(6n)   { --tilt:  3.2deg; }
-  &:active {
-    transform: rotate(var(--tilt, 0deg)) translate(1px, 1px);
+  /* inner photo + text buttons share the press-down feedback */
+  &:active .mb-gal__card-photo--btn:active,
+  &:active .mb-gal__card-text:active {
+    transform: translate(1px, 1px);
   }
+}
+
+/* both inner clickable zones — reset button defaults, keep crisp tap */
+.mb-gal__card-photo--btn,
+.mb-gal__card-text {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  text-align: left;
+  display: block;
+  width: 100%;
+}
+.mb-gal__card-photo--btn { padding: 0; }
+.mb-gal__card-text {
+  padding: 0;
+  margin-top: -2px; /* keep prior spacing under photo */
 }
 
 .mb-gal__card-photo {

@@ -50,11 +50,17 @@ export default function Gallery({ community, mine, loaded, onBack, onView, onNew
 
   const hasEntries = entries.length > 0;
 
-  const handleCardTap = (entry: WallEntry) => {
+  // Split clicks: photo → open the mugshot case file (in-game detail view).
+  //               name/case/charge → open the suspect's Aigram profile
+  //               (falls back to case file for self/demo entries).
+  // Tapping the whole card used to route to profile, hiding the published
+  // mugshot. See feedback_nested_clickables_in_lists.md for the pattern.
+  const handlePhotoTap = (entry: WallEntry) => {
     playClick();
-    // Open the suspect's Aigram profile if we're inside the iframe; else
-    // fall back to the in-game case-file view. 'self' entries route to
-    // the local case file (no profile to open for own mugshot).
+    onView(entry);
+  };
+  const handleNameTap = (entry: WallEntry) => {
+    playClick();
     if (isInAigram && entry.userId && entry.userId !== 'self' && !entry.userId.startsWith('demo-')) {
       openAigramProfile(entry.userId);
     } else {
@@ -100,32 +106,36 @@ export default function Gallery({ community, mine, loaded, onBack, onView, onNew
           <div className="mb-gal__empty">{t('wall_empty')}</div>
         ) : (
           entries.map((entry, i) => (
-            <button
-              key={`${entry.userId}-${entry.mugshot.id}`}
-              type="button"
-              className="mb-gal__card"
-              // onClick (not onPointerDown) — onPointerDown fires the moment
-              // a finger touches the row, before the browser decides whether
-              // it's a tap or a scroll. With onClick, the browser's built-in
-              // scroll detection cancels the click if the user dragged.
-              // See feedback_onclick_for_scrollable_lists.md
-              onClick={() => handleCardTap(entry)}
-            >
-              <div className="mb-gal__card-photo">
+            <div key={`${entry.userId}-${entry.mugshot.id}`} className="mb-gal__card">
+              {/* photo → opens this user's mugshot detail (case file) */}
+              <button
+                type="button"
+                className="mb-gal__card-photo mb-gal__card-photo--btn"
+                // onClick (not onPointerDown) so scroll gestures don't fire
+                // taps. See feedback_onclick_for_scrollable_lists.md
+                onClick={() => handlePhotoTap(entry)}
+              >
                 <WashBg shape={SHAPES[i % SHAPES.length]} />
                 {entry.mugshot.imageUrl ? (
                   <HalftonePhoto src={entry.mugshot.imageUrl} width={172} height={215} />
                 ) : null}
                 <div className="mb-gal__card-guilty">{t('verdict_guilty_short')}</div>
-              </div>
-              <div className="mb-gal__card-name">
-                {(entry.userName || 'JOHN DOE').toUpperCase()}
-              </div>
-              <div className="mb-gal__card-case">{entry.mugshot.caseNumber}</div>
-              <div className="mb-gal__card-charge">
-                {entry.mugshot.charges.headline}
-              </div>
-            </button>
+              </button>
+              {/* name + case + charge → opens this user's Aigram profile */}
+              <button
+                type="button"
+                className="mb-gal__card-text"
+                onClick={() => handleNameTap(entry)}
+              >
+                <div className="mb-gal__card-name">
+                  {(entry.userName || 'JOHN DOE').toUpperCase()}
+                </div>
+                <div className="mb-gal__card-case">{entry.mugshot.caseNumber}</div>
+                <div className="mb-gal__card-charge">
+                  {entry.mugshot.charges.headline}
+                </div>
+              </button>
+            </div>
           ))
         )}
       </div>
