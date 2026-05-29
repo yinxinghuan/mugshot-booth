@@ -1,9 +1,13 @@
-// Rogue's Gallery — fetch the 6 most-recent users' latest mugshot.
+// Rogue's Gallery — fetch mugshots across the 6 most-recent users.
 //
-// Wire: get/data/list?session_id=<gameUUID> returns up to 6 most-recent
-// users' latest save row. Each row's resource_data parses to a
-// MugshotSave; we take its newest mugshot. Then resolve names + avatars
-// in parallel.
+// Each row's resource_data parses to a MugshotSave (cap 20 mugshots
+// per user). We flatten ALL mugshots across ALL users, sort
+// newest-first across authors, cap the display count, and resolve
+// each unique user's profile once.
+//
+// We throttle at booking (already capped via the gen-image cost),
+// never at display. See feedback_throttle_at_input_not_output —
+// older mugshots stay in the rogue's gallery.
 
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -49,36 +53,58 @@ export function useGallery(): UseGallery {
         );
         const rows = Array.isArray(res?.data) ? res.data : [];
 
-        const parsed: Array<{ row: SaveRow; mugshot: Mugshot }> = [];
+        // Flatten ALL mugshots from each user's save row. Older
+        // pattern only took mugshots[0] per user, which hid every
+        // perp's prior bookings behind their newest. Throttle at
+        // publish, never display.
+        const pairs: Array<{ userId: string; mugshot: Mugshot }> = [];
         for (const row of rows) {
           if (!row.user_id || !row.resource_data) continue;
           try {
             const save = JSON.parse(row.resource_data) as MugshotSave;
-            const m = save.mugshots?.[0];
-            if (m && m.imageUrl) parsed.push({ row, mugshot: m });
+            for (const m of save.mugshots || []) {
+              if (m && m.imageUrl) {
+                pairs.push({ userId: String(row.user_id), mugshot: m });
+              }
+            }
           } catch {
             /* skip corrupt row */
           }
-          if (parsed.length >= 6) break;
         }
+        // Newest first across all authors, cap visible count.
+        pairs.sort((a, b) => (b.mugshot.createdAt ?? 0) - (a.mugshot.createdAt ?? 0));
+        const limited = pairs.slice(0, 24);
 
-        const profiles = await Promise.all(
-          parsed.map(({ row }) =>
-            callAigramAPI<AigramResponse<{ name?: string; head_url?: string }>>(
-              `/note/telegram/user/get/info/by/telegram_id?telegram_id=${encodeURIComponent(row.user_id)}`,
-              'GET',
-            ).catch(() => null),
-          ),
+        // Resolve each unique author's profile once.
+        const uniqueIds = Array.from(new Set(limited.map(p => p.userId)));
+        const profileEntries = await Promise.all(
+          uniqueIds.map(async uid => {
+            try {
+              const r = await callAigramAPI<
+                AigramResponse<{ name?: string; head_url?: string }>
+              >(
+                `/note/telegram/user/get/info/by/telegram_id?telegram_id=${encodeURIComponent(uid)}`,
+                'GET',
+              );
+              return [uid, r?.data ?? null] as const;
+            } catch {
+              return [uid, null] as const;
+            }
+          }),
         );
+        const profileMap = new Map<string, { name?: string; head_url?: string } | null>(profileEntries);
 
         if (cancelled) return;
         setEntries(
-          parsed.map(({ row, mugshot }, i) => ({
-            userId: String(row.user_id),  // normalize: platform may return number
-            userName: profiles[i]?.data?.name,
-            userAvatarUrl: profiles[i]?.data?.head_url,
-            mugshot,
-          })),
+          limited.map(({ userId, mugshot }) => {
+            const p = profileMap.get(userId) || null;
+            return {
+              userId,
+              userName: p?.name,
+              userAvatarUrl: p?.head_url,
+              mugshot,
+            };
+          }),
         );
       } catch {
         if (!cancelled) setEntries([]);
