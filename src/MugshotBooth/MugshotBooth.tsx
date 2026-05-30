@@ -104,9 +104,21 @@ export default function MugshotBooth() {
     }
   }, [phase, hasFirstTouched]);
 
-  const [localExtra, setLocalExtra] = useState<Mugshot[]>([]);
-  const bookedCount = (savedData?.mugshots?.length ?? 0) + localExtra.length;
-  const ownMugshots: Mugshot[] = [...localExtra, ...(savedData?.mugshots ?? [])];
+  // Local mirror — useGameSave.savedData does NOT update after persist(),
+  // so reading `savedData?.mugshots` on the SECOND publish sees stale
+  // (pre-first-publish) data → prependMugshot(null, m2) → persist
+  // overwrites the first mugshot. Seed mirror ONCE from savedData on
+  // first load and treat it as the source of truth.
+  // See feedback_useGameSave_local_mirror.md.
+  const [mirror, setMirror] = useState<MugshotSave | undefined>(undefined);
+  useEffect(() => {
+    if (mirror === undefined && savedData !== undefined) {
+      setMirror(savedData ?? { mugshots: [] });
+    }
+  }, [savedData, mirror]);
+
+  const ownMugshots: Mugshot[] = mirror?.mugshots ?? [];
+  const bookedCount = ownMugshots.length;
 
   const handleSelfieSubmit = async (file: File) => {
     const caseNo = caseNumber(bookedCount);
@@ -117,9 +129,11 @@ export default function MugshotBooth() {
       const m = await mugGen.generate({ selfie: file, caseNumber: caseNo });
       setCurrent(m);
       setPhase('result');
-      const nextMugs = prependMugshot(savedData?.mugshots, m);
-      persist({ mugshots: nextMugs });
-      setLocalExtra((prev) => [m, ...prev].slice(0, 12));
+      const nextSave: MugshotSave = {
+        mugshots: prependMugshot(mirror?.mugshots, m),
+      };
+      setMirror(nextSave);
+      persist(nextSave);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setErrorLabel(`${t('err_processing')} (${msg.slice(0, 100)})`);
