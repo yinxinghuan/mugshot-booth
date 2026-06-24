@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameSave } from '@shared/save';
-import { isInAigram } from '@shared/runtime';
+import { isInAigram, telegramId, useGameEvent } from '@shared/runtime';
+import {
+  appendMessage,
+  guestbookNotifyConfig,
+  newMessage,
+  threadFor,
+} from '@shared/social/guestbook';
 import SvgFilters from './components/SvgFilters';
 import BoothScreen from './components/BoothScreen';
 import ProcessingScreen from './components/ProcessingScreen';
@@ -59,9 +65,12 @@ export default function MugshotBooth() {
   const { savedData, persist } = useGameSave<MugshotSave>('mugshot-booth');
   const mugGen = useMugshotGen();
   const gallery = useGallery();
+  const events = useGameEvent();
 
   const [phase, setPhase] = useState<Phase>('booth');
   const [current, setCurrent] = useState<Mugshot | null>(null);
+  /** Author of the currently-viewed mugshot (set when opened from the wall). */
+  const [currentAuthor, setCurrentAuthor] = useState<WallEntry | null>(null);
   const [pendingCase, setPendingCase] = useState<string | null>(null);
   const [shareLabel, setShareLabel] = useState<string>('');
   const [errorLabel, setErrorLabel] = useState<string>('');
@@ -128,8 +137,12 @@ export default function MugshotBooth() {
     try {
       const m = await mugGen.generate({ selfie: file, caseNumber: caseNo });
       setCurrent(m);
+      setCurrentAuthor(null); // my own fresh booking
       setPhase('result');
+      // Full read-modify-write: preserve guestbook `messages` so booking
+      // never wipes notes I've left on others' mugshots.
       const nextSave: MugshotSave = {
+        ...mirror,
         mugshots: prependMugshot(mirror?.mugshots, m),
       };
       setMirror(nextSave);
@@ -147,6 +160,7 @@ export default function MugshotBooth() {
     playClick();
     setShareLabel('');
     setCameFromWall(false);
+    setCurrentAuthor(null);
     setPhase('booth');
   };
   const handleWall = () => {
@@ -161,8 +175,48 @@ export default function MugshotBooth() {
   const handleViewFromWall = (entry: WallEntry) => {
     playClick();
     setCurrent(entry.mugshot);
+    setCurrentAuthor(entry);
     setCameFromWall(true);
     setPhase('result');
+  };
+
+  // ─── Guestbook: leave a public note on a mugshot ────────────────
+  // Stored in MY own save blob (the gallery aggregates everyone's notes),
+  // the mugshot's author is pinged once per target per session. Skip self
+  // and demo/self-fallback entries (no real author id).
+  const noteNotified = useRef<Set<string>>(new Set());
+  const myUserId = telegramId ? String(telegramId) : undefined;
+  const sendMessage = (mugshot: Mugshot, author: WallEntry | null, text: string) => {
+    const realAuthorId =
+      author &&
+      author.userId &&
+      author.userId !== 'self' &&
+      !author.userId.startsWith('demo-')
+        ? author.userId
+        : undefined;
+    const msg = newMessage(mugshot.id, realAuthorId, text);
+    if (!msg) return;
+
+    setMirror(prev => {
+      const next = appendMessage(prev ?? { mugshots: [] }, msg);
+      persist(next);
+      return next;
+    });
+
+    if (realAuthorId && realAuthorId !== myUserId && !noteNotified.current.has(mugshot.id)) {
+      noteNotified.current.add(mugshot.id);
+      events.trigger(
+        'mugshot_note',
+        guestbookNotifyConfig({
+          toUserId: realAuthorId,
+          refUrl: mugshot.imageUrl,
+          note: text,
+          template: '{sender_name} left a note on your mugshot',
+          imagePrompt: 'Someone left a note on your mugshot.',
+        }),
+      );
+    }
+    setTimeout(() => gallery.refresh(), 1500);
   };
   const handleShare = () => {
     if (!current) return;
@@ -202,6 +256,15 @@ export default function MugshotBooth() {
         <CaseFile
           mugshot={current}
           viewMode={cameFromWall ? 'gallery' : 'booking'}
+          author={currentAuthor}
+          selfUserId={myUserId}
+          thread={threadFor(
+            current.id,
+            gallery.messagesByTarget,
+            mirror?.messages,
+            myUserId,
+          )}
+          onSend={(text) => sendMessage(current, currentAuthor, text)}
           onNew={handleNew}
           onWall={handleWall}
           onShare={isInAigram ? undefined : handleShare}

@@ -955,3 +955,186 @@
   0%, 100% { opacity: .6; }
   50%      { opacity: .25; }
 }
+
+/* ───────── GUESTBOOK NOTES (overlay on the case file) ───────── */
+.mb-notes {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(14, 14, 14, 0.74);
+  animation: mb-notes-fade 160ms ease;
+
+  &__card {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    max-height: 80%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: @paper-bright;
+    border: 2.5px solid @ink;
+    box-shadow: 6px 6px 0 @red;
+    padding: 20px 16px 16px;
+    animation: mb-notes-rise 200ms ease;
+  }
+
+  &__close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    color: @ink;
+    font-family: @font-knewave;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  &__eyebrow {
+    font-family: @font-mono;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .2em;
+    font-size: 10px;
+    color: @red;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  &__empty {
+    font-family: @font-mono;
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(14, 14, 14, 0.5);
+    text-align: center;
+    padding: 10px 6px;
+  }
+  &__list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.mb-note {
+  &__chip {
+    display: inline-flex;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  &__head {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  &__avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: @blue;
+    flex-shrink: 0;
+    color: @paper-bright;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: @font-stencil;
+    font-weight: 900;
+    font-size: 10px;
+    &--letter { background: @blue; }
+  }
+  &__name {
+    font-family: @font-mono;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: .06em;
+    color: @blue-deep;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 160px;
+    &--self { color: @red; }
+  }
+  &__time {
+    font-family: @font-mono;
+    font-size: 9px;
+    letter-spacing: .05em;
+    color: rgba(14, 14, 14, 0.45);
+  }
+  &__text {
+    margin: 4px 0 0 24px;
+    font-family: @font-type;
+    color: @ink;
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+}
+
+.mb-compose {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1.5px dashed @blue-deep;
+
+  &__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: @paper;
+    border: 2px solid @ink;
+    border-radius: 0;
+    padding: 8px 12px;
+    font-family: @font-type;
+    color: @ink;
+    font-size: 14px;
+    outline: none;
+    &::placeholder { color: rgba(14, 14, 14, 0.4); }
+    &:focus { border-color: @red; }
+  }
+  &__send {
+    flex: 0 0 auto;
+    background: @blue;
+    color: @paper-bright;
+    border: 2px solid @ink;
+    box-shadow: 3px 3px 0 @red;
+    padding: 0 14px;
+    font-family: @font-stencil;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    &:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 @red; }
+    &:disabled { opacity: 0.4; cursor: default; box-shadow: 3px 3px 0 @red; }
+  }
+}
+
+@keyframes mb-notes-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes mb-notes-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

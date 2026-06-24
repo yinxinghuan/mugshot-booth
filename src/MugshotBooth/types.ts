@@ -1,5 +1,7 @@
 // Mugshot Booth — data shapes for the booking flow.
 
+import type { GuestMessage } from '@shared/social/guestbook';
+
 export type Phase = 'booth' | 'processing' | 'result' | 'wall';
 
 export interface Charges {
@@ -38,6 +40,9 @@ export interface Mugshot {
 export interface MugshotSave {
   /** Most recent at index 0. */
   mugshots: Mugshot[];
+  /** Public guestbook notes this user left on others' mugshots (stored in
+   *  the sender's own blob, aggregated cross-user best-effort). */
+  messages?: GuestMessage[];
   _lastActive?: number;
 }
 

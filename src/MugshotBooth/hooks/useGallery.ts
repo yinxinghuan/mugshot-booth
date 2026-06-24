@@ -17,6 +17,11 @@ import {
   type AigramResponse,
 } from '@shared/runtime/bridge';
 import { getGameUuid } from '@shared/runtime/game-id';
+import {
+  messagesByTarget as parseMessagesByTarget,
+  type GuestMessage,
+  type SaveRow as GuestSaveRow,
+} from '@shared/social/guestbook';
 import type { Mugshot, MugshotSave, WallEntry } from '../types';
 
 interface SaveRow {
@@ -29,10 +34,14 @@ export interface UseGallery {
   entries: WallEntry[];
   loaded: boolean;
   refresh: () => void;
+  /** Public guestbook notes left on mugshots, grouped by mugshot id
+   *  (best-effort cross-user, stamped with each note author's profile). */
+  messagesByTarget: Map<string, GuestMessage[]>;
 }
 
 export function useGallery(): UseGallery {
   const [entries, setEntries] = useState<WallEntry[]>([]);
+  const [messages, setMessages] = useState<Map<string, GuestMessage[]>>(new Map());
   const [loaded, setLoaded] = useState(false);
   const [nonce, setNonce] = useState(0);
 
@@ -75,8 +84,19 @@ export function useGallery(): UseGallery {
         pairs.sort((a, b) => (b.mugshot.createdAt ?? 0) - (a.mugshot.createdAt ?? 0));
         const limited = pairs.slice(0, 24);
 
-        // Resolve each unique author's profile once.
-        const uniqueIds = Array.from(new Set(limited.map(p => p.userId)));
+        // Public guestbook notes on mugshots — SAME fetch, no extra call.
+        // Stamps each note with fromUserId = owning row's user_id.
+        const byTarget = parseMessagesByTarget(rows as GuestSaveRow[]);
+
+        // Resolve each unique author's profile once — mugshot authors AND
+        // note authors (so note chips show avatar + name).
+        const noteAuthorIds: string[] = [];
+        for (const msgs of byTarget.values()) {
+          for (const m of msgs) if (m.fromUserId) noteAuthorIds.push(m.fromUserId);
+        }
+        const uniqueIds = Array.from(
+          new Set([...limited.map(p => p.userId), ...noteAuthorIds]),
+        );
         const profileEntries = await Promise.all(
           uniqueIds.map(async uid => {
             try {
@@ -95,6 +115,20 @@ export function useGallery(): UseGallery {
         const profileMap = new Map<string, { name?: string; head_url?: string } | null>(profileEntries);
 
         if (cancelled) return;
+
+        // Stamp note authors with their resolved profile.
+        const stampedMessages = new Map<string, GuestMessage[]>();
+        for (const [target, msgs] of byTarget) {
+          stampedMessages.set(
+            target,
+            msgs.map(m => {
+              const p = m.fromUserId ? profileMap.get(m.fromUserId) : null;
+              return { ...m, userName: p?.name, userAvatarUrl: p?.head_url };
+            }),
+          );
+        }
+        setMessages(stampedMessages);
+
         setEntries(
           limited.map(({ userId, mugshot }) => {
             const p = profileMap.get(userId) || null;
@@ -107,7 +141,7 @@ export function useGallery(): UseGallery {
           }),
         );
       } catch {
-        if (!cancelled) setEntries([]);
+        if (!cancelled) { setEntries([]); setMessages(new Map()); }
       } finally {
         if (!cancelled) setLoaded(true);
       }
@@ -117,7 +151,7 @@ export function useGallery(): UseGallery {
     };
   }, [nonce]);
 
-  return { entries, loaded, refresh };
+  return { entries, loaded, refresh, messagesByTarget: messages };
 }
 
 export function isSelf(entry: WallEntry): boolean {

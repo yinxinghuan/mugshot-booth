@@ -2,20 +2,30 @@
 // passing through the red ring wash. Below: massive halftone mugshot,
 // the GUILTY verdict stamp, supporting charges, plea, stats, actions.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import HalftonePhoto from './HalftonePhoto';
 import RedRingWash from './RedRingWash';
 import MetaStrip from './MetaStrip';
 import TicketStub from './TicketStub';
 import Residue from './Residue';
-import { t } from '../i18n';
+import { t, currentLocale } from '../i18n';
 import { playClick } from '../utils/audio';
 import { splitHeadline } from '../utils/headline';
-import type { Mugshot } from '../types';
+import { openAigramProfile, isInAigram } from '@shared/runtime';
+import { timeAgo, type GuestMessage } from '@shared/social/guestbook';
+import type { Mugshot, WallEntry } from '../types';
 
 interface Props {
   mugshot: Mugshot;
   viewMode: 'booking' | 'gallery';
+  /** Author of this mugshot, when viewed from the gallery (null for own booking). */
+  author?: WallEntry | null;
+  /** This player's id — render own notes as "you", skip self profile tap. */
+  selfUserId?: string;
+  /** Public guestbook notes on this mugshot (wall ∪ mine, oldest-first). */
+  thread?: GuestMessage[];
+  /** Leave a note on this mugshot. */
+  onSend?: (text: string) => void;
   onNew: () => void;
   onWall: () => void;
   onShare?: () => void;
@@ -25,7 +35,10 @@ interface Props {
 
 export default function CaseFile({
   mugshot,
-  viewMode: _viewMode,
+  viewMode,
+  selfUserId,
+  thread = [],
+  onSend,
   onNew,
   onWall,
   onShare,
@@ -36,6 +49,7 @@ export default function CaseFile({
     () => splitHeadline(mugshot.charges.headline),
     [mugshot.charges.headline],
   );
+  const [notesOpen, setNotesOpen] = useState(false);
 
   return (
     <>
@@ -106,13 +120,23 @@ export default function CaseFile({
       </div>
 
       <div className="mb-actions">
-        <button
-          type="button"
-          className="mb-chip mb-chip--secondary"
-          onPointerDown={() => { playClick(); onWall(); }}
-        >
-          {t('cta_wall_short')}
-        </button>
+        {viewMode === 'gallery' ? (
+          <button
+            type="button"
+            className="mb-chip mb-chip--secondary"
+            onPointerDown={() => { playClick(); setNotesOpen(true); }}
+          >
+            {t('notes_cta')}{thread.length > 0 ? ` · ${thread.length}` : ''}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="mb-chip mb-chip--secondary"
+            onPointerDown={() => { playClick(); onWall(); }}
+          >
+            {t('cta_wall_short')}
+          </button>
+        )}
         <button
           type="button"
           className="mb-chip mb-chip--primary"
@@ -121,11 +145,129 @@ export default function CaseFile({
           {t('cta_new')}
         </button>
       </div>
+
+      {notesOpen && (
+        <NotesModal
+          thread={thread}
+          selfUserId={selfUserId}
+          canSend={isInAigram && !!onSend}
+          onSend={onSend}
+          onClose={() => { playClick(); setNotesOpen(false); }}
+        />
+      )}
       {/* SHARE wired but not in the action row — keep the 2-button layout
           consistent with the approved mockup. Re-add as a smaller icon
           action later if needed. */}
       {onShare ? <span style={{ display: 'none' }} data-label={shareLabel} aria-disabled={shareDisabled} /> : null}
     </>
+  );
+}
+
+// Guestbook overlay — lightweight modal mirroring bubble-wrap's SlipDetail.
+// The case file itself is a fixed-position noir layout, so notes live in an
+// overlay rather than inline. Close on backdrop tap or the × button.
+function NotesModal({
+  thread,
+  selfUserId,
+  canSend,
+  onSend,
+  onClose,
+}: {
+  thread: GuestMessage[];
+  selfUserId?: string;
+  canSend: boolean;
+  onSend?: (text: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="mb-notes" onClick={onClose}>
+      <div className="mb-notes__card" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="mb-notes__close" onClick={onClose} aria-label="close">×</button>
+        <div className="mb-notes__eyebrow">
+          {t('notes_title')}{thread.length > 0 ? ` · ${thread.length}` : ''}
+        </div>
+        {thread.length > 0 ? (
+          <ul className="mb-notes__list">
+            {thread.map((m) => (
+              <NoteRow key={m.id} msg={m} selfUserId={selfUserId} />
+            ))}
+          </ul>
+        ) : (
+          <div className="mb-notes__empty">{t('notes_empty')}</div>
+        )}
+        {canSend && onSend ? (
+          <Compose onSend={onSend} />
+        ) : (
+          <div className="mb-notes__empty">{t('notes_signedout')}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// One guestbook note: author chip (tappable → profile; self shows "you"),
+// text, time. onClick + stopPropagation (scroll-vs-click skill).
+function NoteRow({ msg, selfUserId }: { msg: GuestMessage; selfUserId?: string }) {
+  const mine = !!msg.fromUserId && msg.fromUserId === selfUserId;
+  const name = mine ? t('notes_you') : (msg.userName || t('notes_someone'));
+  const initial = (msg.userName || '?').slice(0, 1).toUpperCase();
+  const tappable = !mine && !!msg.fromUserId && isInAigram;
+  const head = (
+    <span className="mb-note__head">
+      {msg.userAvatarUrl ? (
+        <img className="mb-note__avatar" src={msg.userAvatarUrl} alt="" draggable={false} />
+      ) : (
+        <span className="mb-note__avatar mb-note__avatar--letter">{initial}</span>
+      )}
+      <span className={`mb-note__name${mine ? ' mb-note__name--self' : ''}`}>{name}</span>
+      <span className="mb-note__time">{timeAgo(msg.ts, currentLocale())}</span>
+    </span>
+  );
+  return (
+    <li className="mb-note">
+      {tappable ? (
+        <button
+          type="button"
+          className="mb-note__chip"
+          onClick={(e) => { e.stopPropagation(); openAigramProfile(msg.fromUserId!); }}
+        >
+          {head}
+        </button>
+      ) : head}
+      <p className="mb-note__text">{msg.text}</p>
+    </li>
+  );
+}
+
+// Compose box — controlled input + send glyph.
+function Compose({ onSend }: { onSend: (text: string) => void }) {
+  const [text, setText] = useState('');
+  const submit = () => {
+    const v = text.trim();
+    if (!v) return;
+    playClick();
+    onSend(v);
+    setText('');
+  };
+  return (
+    <div className="mb-compose" onClick={(e) => e.stopPropagation()}>
+      <input
+        className="mb-compose__input"
+        value={text}
+        maxLength={140}
+        placeholder={t('notes_placeholder')}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+      />
+      <button
+        type="button"
+        className="mb-compose__send"
+        disabled={!text.trim()}
+        onClick={submit}
+      >
+        {t('notes_send')}
+      </button>
+    </div>
   );
 }
 

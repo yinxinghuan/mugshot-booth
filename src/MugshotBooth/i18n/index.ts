@@ -40,6 +40,16 @@ const dict: Record<Locale, Record<string, string>> = {
     wall_title: "ROGUE'S GALLERY",
     wall_empty: 'no other suspects booked yet — be the first.',
 
+    // Guestbook (notes left on a mugshot's case file)
+    notes_title: 'NOTES ON FILE',
+    notes_cta: 'NOTES',
+    notes_empty: 'no notes on this file yet — leave the first.',
+    notes_signedout: 'open in aigram to leave a note',
+    notes_placeholder: 'leave a note…',
+    notes_send: 'SEND',
+    notes_you: 'you',
+    notes_someone: 'someone',
+
     // Errors
     err_upload: "couldn't develop that photograph — try another",
     err_processing: 'booking failed — please return to the holding cell',
@@ -74,6 +84,15 @@ const dict: Record<Locale, Record<string, string>> = {
 
     wall_title: '通缉墙',
     wall_empty: '还没有别的嫌疑人，你是第一位。',
+
+    notes_title: '档案留言',
+    notes_cta: '留言',
+    notes_empty: '还没有人留言 —— 来当第一个。',
+    notes_signedout: '在 aigram 中打开即可留言',
+    notes_placeholder: '写句留言…',
+    notes_send: '发送',
+    notes_you: '你',
+    notes_someone: '某人',
 
     err_upload: '照片冲洗失败，换一张试试',
     err_processing: '收押失败，请回到收押室',
