@@ -802,6 +802,7 @@
   background: @paper-bright;
   padding: 8px 8px 10px;
   border: none;
+  min-width: 0; // long-username truncation: let grid track shrink so name ellipsis works
   transform: rotate(var(--tilt, 0deg));
   overflow: visible;
   -webkit-tap-highlight-color: transparent;
@@ -911,6 +912,11 @@
   text-transform: uppercase;
   line-height: 1;
   margin-top: 6px;
+  // long-username truncation
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mb-gal__card-case {
   font-family: @font-mono;
