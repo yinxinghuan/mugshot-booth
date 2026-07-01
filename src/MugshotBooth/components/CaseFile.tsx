@@ -15,6 +15,8 @@ import { openAigramProfile, isInAigram } from '@shared/runtime';
 import { timeAgo, type GuestMessage } from '@shared/social/guestbook';
 import type { Mugshot, WallEntry } from '../types';
 
+const ALTERU_APP_URL = 'https://apps.apple.com/app/id6769646546';
+
 interface Props {
   mugshot: Mugshot;
   viewMode: 'booking' | 'gallery';
@@ -198,7 +200,12 @@ function NotesModal({
         {canSend && onSend ? (
           <Compose onSend={onSend} />
         ) : (
-          <div className="mb-notes__empty">{t('notes_signedout')}</div>
+          <div className="mb-notes__empty mb-notes__download">
+            <span>{t('notes_signedout')}</span>
+            <a href={ALTERU_APP_URL} target="_blank" rel="noopener noreferrer">
+              {t('download_alteru')}
+            </a>
+          </div>
         )}
       </div>
     </div>
